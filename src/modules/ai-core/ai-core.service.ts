@@ -1,3 +1,4 @@
+import { UpdateAiAnnotationDto } from 'src/modules/ai-core/dto/annotation/update-ai-annotation.dto';
 import {
   BadRequestException,
   Injectable,
@@ -22,11 +23,12 @@ import {
   ApproveAnnotationDto,
   RejectAnnotationDto,
   SaveHumanAnnotationDto,
-} from './dto/human-annotation.dto';
-import { RunAiDetectionDto } from './dto/run-ai-detection.dto.ts';
-import { ExportAnnotationsDto } from 'src/modules/ai-core/dto/export-annotation.dto';
+} from './dto/annotation/human-annotation.dto';
+import { RunAiDetectionDto } from './dto/annotation/run-ai-detection.dto.ts';
+import { ExportAnnotationsDto } from 'src/modules/ai-core/dto/annotation/export-annotation.dto';
 import FormData from 'form-data';
-import { CreateAiAnnotationDto } from './dto/create-ai-annotation.dto';
+import { CreateAiAnnotationDto } from './dto/annotation/create-ai-annotation.dto';
+import { DeleteAiAnnotationDto } from 'src/modules/ai-core/dto/annotation/delete-ai-annotation.dto';
 
 @Injectable()
 export class AiCoreService {
@@ -147,6 +149,33 @@ export class AiCoreService {
     });
 
     return await this.imageAnnotationRepo.save(ann);
+  }
+
+  async updateAnnotationFromDetections(dto: UpdateAiAnnotationDto) {
+    const imageRecord = await this.resultImageRepo.findOne({
+      where: { image_id: dto.image_id },
+    });
+    if (!imageRecord) throw new NotFoundException(`Image not found`);
+
+    const existingAnn = await this.imageAnnotationRepo.findOne({
+      where: {
+        image_id: dto.image_id,
+        annotation_source: AnnotationSource.AI,
+      },
+    });
+
+    if (!existingAnn) {
+      throw new NotFoundException(`Annotation for this image not found`);
+    }
+
+    Object.assign(existingAnn, {
+      annotation_data: dto.detections ?? [],
+      ai_model_name: dto.model_name ?? 'yolov12n',
+      ai_model_version: 'v1.0',
+      labeled_at: new Date(),
+    });
+
+    return await this.imageAnnotationRepo.save(existingAnn);
   }
 
   // ==================== 2. GALLERY (LIST) ====================
