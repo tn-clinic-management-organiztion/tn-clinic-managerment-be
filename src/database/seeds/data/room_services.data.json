@@ -1,0 +1,11 @@
+[
+  { "room_id": 10, "service_id": 1 },
+  { "room_id": 10, "service_id": 2 },
+  { "room_id": 10, "service_id": 3 },
+  { "room_id": 10, "service_id": 4 },
+  { "room_id": 10, "service_id": 5 },
+
+  { "room_id": 8, "service_id": 6 },
+  { "room_id": 9, "service_id": 7 },
+  { "room_id": 8, "service_id": 8 }
+]

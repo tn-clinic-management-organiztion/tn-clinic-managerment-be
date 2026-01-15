@@ -1,0 +1,19 @@
+[
+  { "service_id": 1, "category_id": 2, "service_name": "Công thức máu", "unit_price": 100000.0 },
+  { "service_id": 2, "category_id": 3, "service_name": "Đường huyết", "unit_price": 50000.0 },
+  { "service_id": 3, "category_id": 3, "service_name": "Chức năng thận (Ure, Creatinine)", "unit_price": 90000.0 },
+  { "service_id": 4, "category_id": 3, "service_name": "Chức năng gan (AST, ALT, GGT)", "unit_price": 120000.0 },
+  { "service_id": 5, "category_id": 4, "service_name": "Tổng phân tích nước tiểu", "unit_price": 80000.0 },
+
+  { "service_id": 6, "category_id": 6, "service_name": "Siêu âm bụng", "unit_price": 200000.0 },
+  { "service_id": 7, "category_id": 7, "service_name": "X-Quang ngực", "unit_price": 150000.0 },
+  { "service_id": 8, "category_id": 9, "service_name": "Điện tim 12 chuyển đạo", "unit_price": 120000.0 },
+
+  { "service_id": 9, "category_id": 10, "service_name": "Khám nội khoa", "unit_price": 80000.0 },
+  { "service_id": 10, "category_id": 10, "service_name": "Khám ngoại khoa", "unit_price": 90000.0 },
+  { "service_id": 11, "category_id": 10, "service_name": "Khám sản phụ khoa", "unit_price": 100000.0 },
+  { "service_id": 12, "category_id": 10, "service_name": "Khám nhi khoa", "unit_price": 90000.0 },
+  { "service_id": 13, "category_id": 10, "service_name": "Khám tai mũi họng", "unit_price": 90000.0 },
+  { "service_id": 14, "category_id": 10, "service_name": "Khám mắt", "unit_price": 90000.0 },
+  { "service_id": 15, "category_id": 10, "service_name": "Khám răng hàm mặt", "unit_price": 100000.0 }
+]

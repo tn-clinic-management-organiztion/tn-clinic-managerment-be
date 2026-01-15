@@ -1,0 +1,29 @@
+[
+  {
+    "icd_code": "I10",
+    "parent_code": null,
+    "name_vi": "Tăng huyết áp nguyên phát",
+    "name_en": "Essential (primary) hypertension",
+    "level": 1,
+    "is_leaf": true,
+    "active": true
+  },
+  {
+    "icd_code": "J00",
+    "parent_code": null,
+    "name_vi": "Viêm mũi họng cấp",
+    "name_en": "Acute nasopharyngitis",
+    "level": 3,
+    "is_leaf": true,
+    "active": true
+  },
+  {
+    "icd_code": "M54",
+    "parent_code": null,
+    "name_vi": "Đau thắt lưng",
+    "name_en": "Dorsalgia",
+    "level": 1,
+    "is_leaf": true,
+    "active": true
+  }
+]

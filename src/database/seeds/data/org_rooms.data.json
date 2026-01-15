@@ -1,0 +1,80 @@
+[
+  {
+    "room_id": 1,
+    "room_name": "PK Nội khoa",
+    "room_type": "CLINIC",
+    "is_active": true
+  },
+  {
+    "room_id": 2,
+    "room_name": "PK Ngoại khoa",
+    "room_type": "CLINIC",
+    "is_active": true
+  },
+  {
+    "room_id": 3,
+    "room_name": "PK Sản phụ khoa",
+    "room_type": "CLINIC",
+    "is_active": true
+  },
+  {
+    "room_id": 4,
+    "room_name": "PK Nhi khoa",
+    "room_type": "CLINIC",
+    "is_active": true
+  },
+  {
+    "room_id": 5,
+    "room_name": "PK Tai mũi họng",
+    "room_type": "CLINIC",
+    "is_active": true
+  },
+  {
+    "room_id": 6,
+    "room_name": "PK Mắt",
+    "room_type": "CLINIC",
+    "is_active": true
+  },
+  {
+    "room_id": 7,
+    "room_name": "PK Răng hàm mặt",
+    "room_type": "CLINIC",
+    "is_active": true
+  },
+  {
+    "room_id": 8,
+    "room_name": "Phòng Siêu âm",
+    "room_type": "PARACLINICAL",
+    "is_active": true
+  },
+  {
+    "room_id": 9,
+    "room_name": "Phòng X-Quang",
+    "room_type": "PARACLINICAL",
+    "is_active": true
+  },
+  {
+    "room_id": 10,
+    "room_name": "Phòng Xét nghiệm",
+    "room_type": "PARACLINICAL",
+    "is_active": true
+  },
+  {
+    "room_id": 11,
+    "room_name": "Nhà thuốc",
+    "room_type": "PHARMACY",
+    "is_active": true
+  },
+  {
+    "room_id": 12,
+    "room_name": "Quầy Thu Ngân",
+    "room_type": "CASHIER",
+    "is_active": true
+  },
+  {
+    "room_id": 13,
+    "room_name": "Phòng Hành Chính",
+    "room_type": "ADMIN",
+    "is_active": true
+  }
+]

@@ -6,7 +6,6 @@ import { RefSpecialty } from './ref_specialties.entity';
 
 @Entity('staff_profiles')
 export class StaffProfile {
-  // PK is also FK to sys_users
   @PrimaryColumn('uuid', { name: 'staff_id' })
   staff_id: string;
 
