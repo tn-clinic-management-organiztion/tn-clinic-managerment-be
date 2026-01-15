@@ -1,0 +1,15 @@
+[
+  { "category_id": 1, "parent_id": null, "category_name": "Xét nghiệm", "is_system_root": true },
+  { "category_id": 2, "parent_id": 1, "category_name": "Huyết học", "is_system_root": false },
+  { "category_id": 3, "parent_id": 1, "category_name": "Hóa sinh", "is_system_root": false },
+  { "category_id": 4, "parent_id": 1, "category_name": "Xét nghiệm nước tiểu", "is_system_root": false },
+
+  { "category_id": 5, "parent_id": null, "category_name": "Chẩn đoán hình ảnh", "is_system_root": true },
+  { "category_id": 6, "parent_id": 5, "category_name": "Siêu âm", "is_system_root": false },
+  { "category_id": 7, "parent_id": 5, "category_name": "X-Quang", "is_system_root": false },
+
+  { "category_id": 8, "parent_id": null, "category_name": "Thăm dò chức năng", "is_system_root": true },
+  { "category_id": 9, "parent_id": 8, "category_name": "Điện tim", "is_system_root": false },
+
+  { "category_id": 10, "parent_id": null, "category_name": "Khám bệnh", "is_system_root": true }
+]

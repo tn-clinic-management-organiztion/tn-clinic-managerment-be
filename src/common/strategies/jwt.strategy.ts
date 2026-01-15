@@ -16,14 +16,14 @@ export type UserType = 'STAFF' | 'PATIENT' | 'ADMIN';
 
 export interface JwtUserInfo {
   user_id: string;
-  username?: string;
-  email?: string;
-  phone?: string;
-  user_type?: UserType;
-  role?: string;
-  staff_id?: string;
-  patient_id?: string;
-  full_name?: string;
+  username?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  user_type?: UserType | null;
+  role?: string | null;
+  staff_id?: string | null;
+  patient_id?: string | null;
+  full_name?: string | null;
 }
 
 @Injectable()
@@ -58,9 +58,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     // 2. Xác định user_type và lấy thêm thông tin
     let userInfo: JwtUserInfo = {
       user_id: user.user_id,
-      username: user.username,
-      email: user.email,
-      phone: user.phone,
+      username: user.username ?? null,
+      email: user.email ?? null,
+      phone: user.phone ?? null,
     };
 
     // Kiểm tra là staff hay patient

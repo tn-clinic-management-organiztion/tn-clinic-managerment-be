@@ -2,7 +2,6 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import * as argon2 from 'argon2';
 import { PatientProfile } from 'src/database/entities/auth/patient_profiles.entity';
 import { StaffProfile } from 'src/database/entities/auth/staff_profiles.entity';
 import { SysUser } from 'src/database/entities/auth/sys_users.entity';
@@ -11,6 +10,7 @@ import {
   JwtPayload,
   Tokens,
 } from 'src/modules/iam/auth/interfaces/jwt-payload.interface';
+import { hashData, verifyHash } from 'src/utils/hash.util';
 import { Repository } from 'typeorm';
 
 @Injectable()
@@ -25,15 +25,6 @@ export class AuthService {
     private jwtService: JwtService,
     private configService: ConfigService,
   ) {}
-
-  // Utility method
-  async hashData(data: string): Promise<string> {
-    return argon2.hash(data);
-  }
-
-  async verifyHash(hash: string, data: string): Promise<boolean> {
-    return argon2.verify(hash, data);
-  }
 
   async getTokens(payload: JwtPayload): Promise<Tokens> {
     const [access_token, refresh_token] = await Promise.all([
@@ -51,7 +42,7 @@ export class AuthService {
   }
 
   async updateRefreshToken(userId: string, refreshToken: string) {
-    const hash = await this.hashData(refreshToken);
+    const hash = await hashData(refreshToken);
     await this.usersRepository.update(userId, {
       refresh_token_hash: hash,
     });
@@ -73,7 +64,7 @@ export class AuthService {
     }
 
     // 2. Verify password với argon2
-    const isPasswordValid = await this.verifyHash(
+    const isPasswordValid = await verifyHash(
       user.password || '',
       loginDto.password,
     );
@@ -85,7 +76,7 @@ export class AuthService {
     // 3. Tạo payload cho JWT
     let payload: JwtPayload = {
       sub: user.user_id,
-      username: user.username,
+      username: user.username || '',
       user_type: 'STAFF', // Mặc định
     };
 
@@ -148,7 +139,7 @@ export class AuthService {
       }
 
       // 3. Verify refresh token hash
-      const isValid = await this.verifyHash(
+      const isValid = await verifyHash(
         user.refresh_token_hash,
         refreshToken,
       );
@@ -174,7 +165,7 @@ export class AuthService {
         if (staff) {
           newPayload = {
             ...newPayload,
-            username: user.username,
+            username: user.username ?? "",
             role: staff.role?.role_code,
             staff_id: staff.staff_id,
           };
