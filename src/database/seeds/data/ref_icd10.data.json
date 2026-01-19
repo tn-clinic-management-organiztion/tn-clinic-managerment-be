@@ -1,16 +1,97 @@
 [
   {
-    "icd_code": "I10",
+    "icd_code": "I00-I99",
     "parent_code": null,
+    "name_vi": "Bệnh hệ tuần hoàn",
+    "name_en": "Diseases of the circulatory system",
+    "level": 0,
+    "is_leaf": false,
+    "active": true
+  },
+  {
+    "icd_code": "J00-J99",
+    "parent_code": null,
+    "name_vi": "Bệnh hệ hô hấp",
+    "name_en": "Diseases of the respiratory system",
+    "level": 0,
+    "is_leaf": false,
+    "active": true
+  },
+  {
+    "icd_code": "K00-K93",
+    "parent_code": null,
+    "name_vi": "Bệnh hệ tiêu hóa",
+    "name_en": "Diseases of the digestive system",
+    "level": 0,
+    "is_leaf": false,
+    "active": true
+  },
+  {
+    "icd_code": "M00-M99",
+    "parent_code": null,
+    "name_vi": "Bệnh hệ cơ xương khớp",
+    "name_en": "Diseases of the musculoskeletal system",
+    "level": 0,
+    "is_leaf": false,
+    "active": true
+  },
+  {
+    "icd_code": "I10-I15",
+    "parent_code": "I00-I99",
+    "name_vi": "Bệnh tăng huyết áp",
+    "name_en": "Hypertensive diseases",
+    "level": 1,
+    "is_leaf": false,
+    "active": true
+  },
+  {
+    "icd_code": "I10",
+    "parent_code": "I10-I15",
     "name_vi": "Tăng huyết áp nguyên phát",
     "name_en": "Essential (primary) hypertension",
-    "level": 1,
+    "level": 3,
     "is_leaf": true,
     "active": true
   },
   {
+    "icd_code": "I11",
+    "parent_code": "I10-I15",
+    "name_vi": "Bệnh tim do tăng huyết áp",
+    "name_en": "Hypertensive heart disease",
+    "level": 3,
+    "is_leaf": true,
+    "active": true
+  },
+  {
+    "icd_code": "I20",
+    "parent_code": "I00-I99",
+    "name_vi": "Đau thắt ngực",
+    "name_en": "Angina pectoris",
+    "level": 3,
+    "is_leaf": true,
+    "active": true
+  },
+  {
+    "icd_code": "I21",
+    "parent_code": "I00-I99",
+    "name_vi": "Nhồi máu cơ tim cấp",
+    "name_en": "Acute myocardial infarction",
+    "level": 3,
+    "is_leaf": true,
+    "active": true
+  },
+  {
+    "icd_code": "J00-J06",
+    "parent_code": "J00-J99",
+    "name_vi": "Nhiễm trùng hô hấp trên cấp",
+    "name_en": "Acute upper respiratory infections",
+    "level": 1,
+    "is_leaf": false,
+    "active": true
+  },
+  {
     "icd_code": "J00",
-    "parent_code": null,
+    "parent_code": "J00-J06",
     "name_vi": "Viêm mũi họng cấp",
     "name_en": "Acute nasopharyngitis",
     "level": 3,
@@ -18,11 +99,128 @@
     "active": true
   },
   {
-    "icd_code": "M54",
-    "parent_code": null,
-    "name_vi": "Đau thắt lưng",
-    "name_en": "Dorsalgia",
+    "icd_code": "J01",
+    "parent_code": "J00-J06",
+    "name_vi": "Viêm xoang cấp",
+    "name_en": "Acute sinusitis",
+    "level": 3,
+    "is_leaf": true,
+    "active": true
+  },
+  {
+    "icd_code": "J02",
+    "parent_code": "J00-J06",
+    "name_vi": "Viêm họng cấp",
+    "name_en": "Acute pharyngitis",
+    "level": 3,
+    "is_leaf": true,
+    "active": true
+  },
+  {
+    "icd_code": "J03",
+    "parent_code": "J00-J06",
+    "name_vi": "Viêm amidan cấp",
+    "name_en": "Acute tonsillitis",
+    "level": 3,
+    "is_leaf": true,
+    "active": true
+  },
+  {
+    "icd_code": "J18",
+    "parent_code": "J00-J99",
+    "name_vi": "Viêm phổi không xác định tác nhân",
+    "name_en": "Pneumonia, unspecified organism",
+    "level": 3,
+    "is_leaf": true,
+    "active": true
+  },
+  {
+    "icd_code": "K20-K31",
+    "parent_code": "K00-K93",
+    "name_vi": "Bệnh dạ dày – tá tràng",
+    "name_en": "Diseases of oesophagus, stomach and duodenum",
     "level": 1,
+    "is_leaf": false,
+    "active": true
+  },
+  {
+    "icd_code": "K29",
+    "parent_code": "K20-K31",
+    "name_vi": "Viêm dạ dày",
+    "name_en": "Gastritis",
+    "level": 3,
+    "is_leaf": true,
+    "active": true
+  },
+  {
+    "icd_code": "K30",
+    "parent_code": "K20-K31",
+    "name_vi": "Khó tiêu chức năng",
+    "name_en": "Functional dyspepsia",
+    "level": 3,
+    "is_leaf": true,
+    "active": true
+  },
+  {
+    "icd_code": "A09",
+    "parent_code": null,
+    "name_vi": "Tiêu chảy cấp nghi nhiễm trùng",
+    "name_en": "Diarrhoea and gastroenteritis of presumed infectious origin",
+    "level": 3,
+    "is_leaf": true,
+    "active": true
+  },
+  {
+    "icd_code": "M50-M54",
+    "parent_code": "M00-M99",
+    "name_vi": "Bệnh lý cột sống",
+    "name_en": "Other dorsopathies",
+    "level": 1,
+    "is_leaf": false,
+    "active": true
+  },
+  {
+    "icd_code": "M54",
+    "parent_code": "M50-M54",
+    "name_vi": "Đau lưng",
+    "name_en": "Dorsalgia",
+    "level": 2,
+    "is_leaf": false,
+    "active": true
+  },
+  {
+    "icd_code": "M54.5",
+    "parent_code": "M54",
+    "name_vi": "Đau thắt lưng",
+    "name_en": "Low back pain",
+    "level": 3,
+    "is_leaf": true,
+    "active": true
+  },
+  {
+    "icd_code": "M17",
+    "parent_code": "M00-M99",
+    "name_vi": "Thoái hóa khớp gối",
+    "name_en": "Gonarthrosis",
+    "level": 3,
+    "is_leaf": true,
+    "active": true
+  },
+  {
+    "icd_code": "R50",
+    "parent_code": null,
+    "name_vi": "Sốt không rõ nguyên nhân",
+    "name_en": "Fever of unknown origin",
+    "level": 3,
+    "is_leaf": true,
+    "active": true
+  },
+  {
+    "icd_code": "B34",
+    "parent_code": null,
+    "name_vi": "Nhiễm virus không xác định",
+    "name_en": "Viral infection of unspecified site",
+    "level": 3,
     "is_leaf": true,
     "active": true
   }

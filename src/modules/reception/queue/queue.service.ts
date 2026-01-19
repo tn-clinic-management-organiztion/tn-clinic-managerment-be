@@ -280,50 +280,39 @@ export class QueueService {
     return qb.getMany();
   }
 
-  async getWaitingTickets(
+  async getTicketsByStatus(
+    status: string, // "WAITING" | "CALLED" | "IN_PROGRESS" | "WAITING,CALLED"
     roomId: number,
     ticketType?: QueueTicketType,
     source?: QueueSource,
   ): Promise<QueueTicket[]> {
+    const statuses = status
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean) as QueueStatus[];
+
     const qb = this.ticketRepo
       .createQueryBuilder('ticket')
       .leftJoinAndSelect('ticket.encounter', 'encounter')
       .leftJoinAndSelect('encounter.patient', 'enc_patient')
-      .where('ticket.room_id = :roomId', { roomId })
-      .andWhere('ticket.status = :status', { status: QueueStatus.WAITING });
+      .where('ticket.room_id = :roomId', { roomId });
 
-    if (ticketType)
+    if (statuses.length === 1) {
+      qb.andWhere('ticket.status = :status', { status: statuses[0] });
+    } else {
+      qb.andWhere('ticket.status IN (:...statuses)', { statuses });
+    }
+
+    if (ticketType) {
       qb.andWhere('ticket.ticket_type = :ticketType', { ticketType });
-    if (source) qb.andWhere('ticket.source = :source', { source });
+    }
+
+    if (source) {
+      qb.andWhere('ticket.source = :source', { source });
+    }
 
     qb.orderBy('ticket.display_number', 'ASC');
     return qb.getMany();
-  }
-
-  async callNext(
-    roomId: number,
-    ticketType: QueueTicketType,
-    source?: QueueSource,
-  ) {
-    const waitingTickets = await this.getWaitingTickets(
-      roomId,
-      ticketType,
-      source,
-    );
-    if (!waitingTickets.length)
-      throw new NotFoundException('No waiting tickets');
-
-    const nextTicket = waitingTickets[0];
-    nextTicket.status = QueueStatus.CALLED;
-    nextTicket.called_at = new Date();
-
-    const saved = await this.ticketRepo.save(nextTicket);
-
-    // EMIT WEBSOCKET EVENT
-    const fullTicket = await this.findOne(saved.ticket_id);
-    this.queueGateway.emitTicketCalled(roomId, fullTicket);
-
-    return fullTicket;
   }
 
   async callSpecific(ticketId: string): Promise<QueueTicket> {
@@ -338,7 +327,7 @@ export class QueueService {
 
     ticket.status = QueueStatus.CALLED;
     ticket.called_at = new Date();
-        const saved = await this.ticketRepo.save(ticket);
+    const saved = await this.ticketRepo.save(ticket);
 
     // EMIT WEBSOCKET EVENT
     const fullTicket = await this.findOne(saved.ticket_id);
@@ -359,7 +348,7 @@ export class QueueService {
 
     ticket.status = QueueStatus.IN_PROGRESS;
     ticket.started_at = new Date();
-        const saved = await this.ticketRepo.save(ticket);
+    const saved = await this.ticketRepo.save(ticket);
 
     // EMIT WEBSOCKET EVENT
     const fullTicket = await this.findOne(saved.ticket_id);
@@ -382,7 +371,7 @@ export class QueueService {
 
     ticket.status = QueueStatus.COMPLETED;
     ticket.completed_at = new Date();
-        const saved = await this.ticketRepo.save(ticket);
+    const saved = await this.ticketRepo.save(ticket);
 
     // EMIT WEBSOCKET EVENT
     const fullTicket = await this.findOne(saved.ticket_id);
@@ -398,7 +387,13 @@ export class QueueService {
     if (!ticket)
       throw new NotFoundException(`Ticket with ID ${ticketId} not found`);
 
-    if (![QueueStatus.CALLED, QueueStatus.WAITING, QueueStatus.IN_PROGRESS].includes(ticket.status)) {
+    if (
+      ![
+        QueueStatus.CALLED,
+        QueueStatus.WAITING,
+        QueueStatus.IN_PROGRESS,
+      ].includes(ticket.status)
+    ) {
       throw new BadRequestException(
         'Only CALLED or WAITING tickets can be skipped',
       );

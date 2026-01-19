@@ -1,5 +1,5 @@
 // src/modules/ai-core/ai-core.controller.ts
-import { RunAiDetectionDto } from './dto/annotation/run-ai-detection.dto.ts.js';
+import { RunAiDetectionDto } from './dto/annotation/run-ai-detection.dto';
 import {
   Body,
   Controller,

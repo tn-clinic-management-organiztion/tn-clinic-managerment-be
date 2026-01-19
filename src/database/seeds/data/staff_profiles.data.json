@@ -4,7 +4,7 @@
     "role_id": 1,
     "assigned_room_id": 13,
     "specialty_id": null,
-    "full_name": "Nguyễn Văn Quản Trị",
+    "full_name": "Nguyễn Văn Quang",
     "signature_url": null,
     "deleted_at": null
   },
@@ -13,7 +13,7 @@
     "role_id": 3,
     "assigned_room_id": 12,
     "specialty_id": null,
-    "full_name": "Thu ngân",
+    "full_name": "Trần Thị Hồng",
     "signature_url": null,
     "deleted_at": null
   },
@@ -22,8 +22,8 @@
     "role_id": 2,
     "assigned_room_id": 1,
     "specialty_id": 1,
-    "full_name": "Bác sĩ Nội khoa",
-    "signature_url": "\/signatures\/dr_noi.png",
+    "full_name": "BS. Nguyễn Hoàng Minh",
+    "signature_url": "/signatures/dr_noi.png",
     "deleted_at": null
   },
   {
@@ -31,8 +31,8 @@
     "role_id": 2,
     "assigned_room_id": 4,
     "specialty_id": 4,
-    "full_name": "Bác sĩ Nhi khoa",
-    "signature_url": "\/signatures\/dr_nhi.png",
+    "full_name": "BS. Lê Thị Bích Ngọc",
+    "signature_url": "/signatures/dr_nhi.png",
     "deleted_at": null
   },
   {
@@ -40,7 +40,7 @@
     "role_id": 4,
     "assigned_room_id": 10,
     "specialty_id": null,
-    "full_name": "KTV Xét nghiệm",
+    "full_name": "KTV. Phạm Văn Hưng",
     "signature_url": null,
     "deleted_at": null
   },
@@ -49,7 +49,7 @@
     "role_id": 4,
     "assigned_room_id": 9,
     "specialty_id": null,
-    "full_name": "KTV Chẩn đoán HA",
+    "full_name": "KTV. Đặng Quốc Anh",
     "signature_url": null,
     "deleted_at": null
   },
@@ -58,7 +58,7 @@
     "role_id": 5,
     "assigned_room_id": 11,
     "specialty_id": null,
-    "full_name": "Dược sĩ",
+    "full_name": "DS. Võ Thị Thu Hà",
     "signature_url": null,
     "deleted_at": null
   },
@@ -67,7 +67,7 @@
     "role_id": 4,
     "assigned_room_id": 8,
     "specialty_id": null,
-    "full_name": "NVB_kithuatvien_room8",
+    "full_name": "KTV. Nguyễn Thành Đạt",
     "signature_url": null,
     "deleted_at": null
   },
@@ -76,7 +76,7 @@
     "role_id": 2,
     "assigned_room_id": 7,
     "specialty_id": null,
-    "full_name": "NVB_bacsi",
+    "full_name": "BS. Trần Quốc Tuấn",
     "signature_url": null,
     "deleted_at": null
   },
@@ -85,7 +85,7 @@
     "role_id": 3,
     "assigned_room_id": 12,
     "specialty_id": null,
-    "full_name": "NVB_thungan",
+    "full_name": "Nguyễn Thị Mai",
     "signature_url": null,
     "deleted_at": null
   },
@@ -94,7 +94,7 @@
     "role_id": 1,
     "assigned_room_id": null,
     "specialty_id": null,
-    "full_name": "NVB",
+    "full_name": "Nguyễn Văn Bình",
     "signature_url": null,
     "deleted_at": null
   }

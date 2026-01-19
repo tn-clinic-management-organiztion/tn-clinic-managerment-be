@@ -24,7 +24,7 @@ import {
   RejectAnnotationDto,
   SaveHumanAnnotationDto,
 } from './dto/annotation/human-annotation.dto';
-import { RunAiDetectionDto } from './dto/annotation/run-ai-detection.dto.ts';
+import { RunAiDetectionDto } from './dto/annotation/run-ai-detection.dto';
 import { ExportAnnotationsDto } from 'src/modules/ai-core/dto/annotation/export-annotation.dto';
 import FormData from 'form-data';
 import { CreateAiAnnotationDto } from './dto/annotation/create-ai-annotation.dto';

@@ -147,18 +147,66 @@ export class EncountersService {
     };
   }
 
-  async findOne(id: string): Promise<MedicalEncounter> {
-    const encounter = await this.encounterRepo.findOne({
-      where: { encounter_id: id },
-      relations: ['patient', 'doctor', 'assigned_room', 'icd_ref'],
-    });
+  async findOne(id: string) {
+  const encounter = await this.encounterRepo
+    .createQueryBuilder("e")
+    .leftJoin("e.patient", "p")
+    .leftJoin("p.user", "pu") // lấy phone từ sys_users
+    .leftJoin("e.doctor", "d")
+    .leftJoin("e.assigned_room", "r")
+    .leftJoin("e.icd_ref", "icd")
+    .where("e.encounter_id = :id", { id })
+    .select([
+      // Encounter fields cần cho Doctor UI
+      "e.encounter_id",
+      "e.visit_date",
+      "e.current_status",
+      "e.initial_symptoms",
+      "e.weight",
+      "e.height",
+      "e.bmi",
+      "e.temperature",
+      "e.pulse",
+      "e.respiratory_rate",
+      "e.bp_systolic",
+      "e.bp_diastolic",
+      "e.sp_o2",
+      "e.final_icd_code",
+      "e.doctor_conclusion",
+      "e.assigned_room_id",
+      "e.patient_id",
+      "e.doctor_id",
 
-    if (!encounter) {
-      throw new NotFoundException(`Encounter with ID ${id} not found`);
-    }
+      // Patient fields cần hiển thị
+      "p.patient_id",
+      "p.full_name",
+      "p.dob",
+      "p.gender",
 
-    return encounter;
+      // chỉ lấy phone từ SysUser
+      "pu.phone",
+
+      // ICD hiển thị dropdown đã chọn
+      "icd.icd_code",
+      "icd.name_vi",
+      "icd.name_en",
+
+      // phòng (nếu bạn cần)
+      "r.room_id",
+      "r.room_name",
+    ])
+    .getOne();
+
+  if (!encounter) {
+    throw new NotFoundException(`Encounter with ID ${id} not found`);
   }
+  const patient_phone = (encounter as any)?.patient?.user?.phone ?? null;
+  delete (encounter as any)?.patient?.user;
+  return {
+    ...encounter,
+    patient_phone,
+  };
+}
 
   async update(id: string, dto: UpdateEncounterDto): Promise<MedicalEncounter> {
     const encounter = await this.encounterRepo.findOne({
