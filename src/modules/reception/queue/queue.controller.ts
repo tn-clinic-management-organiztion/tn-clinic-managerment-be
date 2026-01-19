@@ -11,6 +11,7 @@ import {
   ParseIntPipe,
   ParseEnumPipe,
   ValidationPipe,
+  BadRequestException,
 } from '@nestjs/common';
 import { QueueService } from './queue.service';
 import {
@@ -21,6 +22,7 @@ import {
 } from './dto/queue.dto';
 import {
   QueueSource,
+  QueueStatus,
   QueueTicketType,
 } from 'src/database/entities/reception/queue_tickets.entity';
 
@@ -53,35 +55,31 @@ export class QueueController {
     return this.queueService.getTodayTicketsByRoom(roomId, ticketType, source);
   }
 
-  @Get('tickets/waiting/:roomId')
-  getWaitingTickets(
-    @Param('roomId', ParseIntPipe) roomId: number,
-    @Query(
-      'ticket_type',
-      new ParseEnumPipe(QueueTicketType, { optional: true }),
-    )
-    ticketType?: QueueTicketType,
-    @Query('source', new ParseEnumPipe(QueueSource, { optional: true }))
-    source?: QueueSource,
-  ) {
-    return this.queueService.getWaitingTickets(roomId, ticketType, source);
+@Get('tickets/status/:status/room/:roomId')
+getTicketsByStatus(
+  @Param('status') status: string, // e.g. "WAITING" or "WAITING,CALLED"
+  @Param('roomId', ParseIntPipe) roomId: number,
+  @Query('ticket_type', new ParseEnumPipe(QueueTicketType, { optional: true }))
+  ticketType?: QueueTicketType,
+  @Query('source', new ParseEnumPipe(QueueSource, { optional: true }))
+  source?: QueueSource,
+) {
+  const statuses = status
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  const allowed = new Set(Object.values(QueueStatus));
+  const invalid = statuses.filter((s) => !allowed.has(s as QueueStatus));
+  if (invalid.length > 0) {
+    throw new BadRequestException(`Invalid status: ${invalid.join(', ')}`);
   }
+  return this.queueService.getTicketsByStatus(status, roomId, ticketType, source);
+}
 
   @Get('tickets/:id')
   findOne(@Param('id') id: string) {
     return this.queueService.findOne(id);
-  }
-
-  @Post('tickets/call-next/:roomId/:queueTicketType')
-  @HttpCode(HttpStatus.OK)
-  callNext(
-    @Param('roomId', ParseIntPipe) roomId: number,
-    @Param('queueTicketType', new ParseEnumPipe(QueueTicketType))
-    ticketType: QueueTicketType,
-    @Query('source', new ParseEnumPipe(QueueSource, { optional: true }))
-    source?: QueueSource,
-  ) {
-    return this.queueService.callNext(roomId, ticketType, source);
   }
 
   @Post('tickets/:id/call')

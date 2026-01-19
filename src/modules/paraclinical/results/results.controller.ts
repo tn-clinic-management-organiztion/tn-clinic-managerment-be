@@ -106,8 +106,8 @@ export class ResultsController {
   }
 
   @Delete('images/:id')
-  @ApiOperation({ summary: 'Delete image and from Cloudinary' })
+  @ApiOperation({ summary: 'Delete image and from Cloudinary (delete annotations)' })
   removeImage(@Param('id') id: string) {
-    return this.resultsService.removeImage(id);
+    return this.resultsService.deleteImage(id);
   }
 }
