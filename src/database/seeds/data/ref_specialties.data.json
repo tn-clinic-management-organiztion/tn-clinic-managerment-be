@@ -1,0 +1,51 @@
+[
+  {
+    "specialty_id": 1,
+    "specialty_code": "NK",
+    "specialty_name": "Nội khoa",
+    "description": null,
+    "is_active": true
+  },
+  {
+    "specialty_id": 2,
+    "specialty_code": "NGOAI",
+    "specialty_name": "Ngoại khoa",
+    "description": null,
+    "is_active": true
+  },
+  {
+    "specialty_id": 3,
+    "specialty_code": "SAN",
+    "specialty_name": "Sản phụ khoa",
+    "description": null,
+    "is_active": true
+  },
+  {
+    "specialty_id": 4,
+    "specialty_code": "NHI",
+    "specialty_name": "Nhi khoa",
+    "description": null,
+    "is_active": true
+  },
+  {
+    "specialty_id": 5,
+    "specialty_code": "TMH",
+    "specialty_name": "Tai mũi họng",
+    "description": null,
+    "is_active": true
+  },
+  {
+    "specialty_id": 6,
+    "specialty_code": "MAT",
+    "specialty_name": "Mắt",
+    "description": null,
+    "is_active": true
+  },
+  {
+    "specialty_id": 7,
+    "specialty_code": "RHM",
+    "specialty_name": "Răng hàm mặt",
+    "description": null,
+    "is_active": true
+  }
+]

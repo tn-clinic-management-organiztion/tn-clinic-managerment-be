@@ -1,0 +1,101 @@
+[
+  {
+    "staff_id": "eda39824-113f-426f-991b-58d3dda1f8b7",
+    "role_id": 1,
+    "assigned_room_id": 13,
+    "specialty_id": null,
+    "full_name": "Nguyễn Văn Quang",
+    "signature_url": null,
+    "deleted_at": null
+  },
+  {
+    "staff_id": "11111111-1111-4111-8111-111111111110",
+    "role_id": 3,
+    "assigned_room_id": 12,
+    "specialty_id": null,
+    "full_name": "Trần Thị Hồng",
+    "signature_url": null,
+    "deleted_at": null
+  },
+  {
+    "staff_id": "b1c1d1e1-1111-4111-8111-111111111112",
+    "role_id": 2,
+    "assigned_room_id": 1,
+    "specialty_id": 1,
+    "full_name": "BS. Nguyễn Hoàng Minh",
+    "signature_url": "/signatures/dr_noi.png",
+    "deleted_at": null
+  },
+  {
+    "staff_id": "c1d1e1f1-1111-4111-8111-111111111113",
+    "role_id": 2,
+    "assigned_room_id": 4,
+    "specialty_id": 4,
+    "full_name": "BS. Lê Thị Bích Ngọc",
+    "signature_url": "/signatures/dr_nhi.png",
+    "deleted_at": null
+  },
+  {
+    "staff_id": "d1e1f1a1-1111-4111-8111-111111111114",
+    "role_id": 4,
+    "assigned_room_id": 10,
+    "specialty_id": null,
+    "full_name": "KTV. Phạm Văn Hưng",
+    "signature_url": null,
+    "deleted_at": null
+  },
+  {
+    "staff_id": "d2e2f2a2-2222-4222-8222-222222222224",
+    "role_id": 4,
+    "assigned_room_id": 9,
+    "specialty_id": null,
+    "full_name": "KTV. Đặng Quốc Anh",
+    "signature_url": null,
+    "deleted_at": null
+  },
+  {
+    "staff_id": "e1f1a1b1-1111-4111-8111-111111111115",
+    "role_id": 5,
+    "assigned_room_id": 11,
+    "specialty_id": null,
+    "full_name": "DS. Võ Thị Thu Hà",
+    "signature_url": null,
+    "deleted_at": null
+  },
+  {
+    "staff_id": "279df8da-a5ed-4c02-b62f-bf3cf15c942a",
+    "role_id": 4,
+    "assigned_room_id": 8,
+    "specialty_id": null,
+    "full_name": "KTV. Nguyễn Thành Đạt",
+    "signature_url": null,
+    "deleted_at": null
+  },
+  {
+    "staff_id": "3025225e-3363-4956-8f06-8afbb13239c6",
+    "role_id": 2,
+    "assigned_room_id": 7,
+    "specialty_id": null,
+    "full_name": "BS. Trần Quốc Tuấn",
+    "signature_url": null,
+    "deleted_at": null
+  },
+  {
+    "staff_id": "30a7f7a9-9b8d-4f44-aac9-fac455bda1dd",
+    "role_id": 3,
+    "assigned_room_id": 12,
+    "specialty_id": null,
+    "full_name": "Nguyễn Thị Mai",
+    "signature_url": null,
+    "deleted_at": null
+  },
+  {
+    "staff_id": "15be9fbe-1ba2-4c78-8019-74621119728a",
+    "role_id": 1,
+    "assigned_room_id": null,
+    "specialty_id": null,
+    "full_name": "Nguyễn Văn Bình",
+    "signature_url": null,
+    "deleted_at": null
+  }
+]

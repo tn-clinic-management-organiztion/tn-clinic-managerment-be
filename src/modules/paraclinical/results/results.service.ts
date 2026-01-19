@@ -16,6 +16,8 @@ import { IsNull, Repository } from 'typeorm';
 import { ServiceResult } from 'src/database/entities/service/service_results.entity';
 import { ResultImage } from 'src/database/entities/service/result_images.entity';
 import { CloudinaryService } from 'src/shared/cloudinary/cloudinary.service';
+import { DataSource } from 'typeorm';
+import { ImageAnnotation } from 'src/database/entities/ai/image_annotations.entity';
 @Injectable()
 export class ResultsService {
   constructor(
@@ -24,6 +26,7 @@ export class ResultsService {
     @InjectRepository(ResultImage)
     private imageRepo: Repository<ResultImage>,
     private readonly cloudinaryService: CloudinaryService,
+    private readonly dataSource: DataSource,
   ) {}
 
   // ==================== SERVICE RESULTS ====================
@@ -282,18 +285,35 @@ export class ResultsService {
     return await this.imageRepo.save(image);
   }
 
-  async removeImage(id: string): Promise<void> {
-    const image = await this.findOneImage(id);
+  async deleteImage(id: string): Promise<void> {
+  await this.dataSource.transaction(async (manager) => {
+    const resultImageRepo = manager.getRepository(ResultImage);
+    const annotationRepo = manager.getRepository(ImageAnnotation);
 
-    // Delete from Cloudinary if has public_id
+    const image = await resultImageRepo.findOne({
+      where: { image_id: id },
+    });
+
+    if (!image) {
+      throw new NotFoundException(`Image (id: ${id}) not found`);
+    }
+
+    // 1. Delete annotations (DB)
+    await annotationRepo.delete({ image_id: id });
+
+    // 2. Delete image record (DB)
+    await resultImageRepo.delete({ image_id: id });
+
+    // 3. Delete (Cloudinary)
     if (image.public_id) {
       try {
         await this.cloudinaryService.deleteImage(image.public_id);
-      } catch (error) {
-        console.error('Failed to delete from Cloudinary:', error);
+      } catch (err) {
+        console.error("Cloudinary delete failed:", err);
+        // KHÔNG throw 
       }
     }
+  });
+}
 
-    await this.imageRepo.remove(image);
-  }
 }

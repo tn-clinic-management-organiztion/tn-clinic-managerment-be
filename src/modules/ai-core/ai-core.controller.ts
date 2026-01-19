@@ -1,5 +1,5 @@
 // src/modules/ai-core/ai-core.controller.ts
-import { RunAiDetectionDto } from './dto/run-ai-detection.dto.ts';
+import { RunAiDetectionDto } from './dto/annotation/run-ai-detection.dto';
 import {
   Body,
   Controller,
@@ -25,12 +25,13 @@ import {
   SaveHumanAnnotationDto,
   ApproveAnnotationDto,
   RejectAnnotationDto,
-} from './dto/human-annotation.dto';
-import { ToggleDeprecateDto } from './dto/toggle-deprecate.dto';
+} from './dto/annotation/human-annotation.dto.js';
+import { ToggleDeprecateDto } from './dto/annotation/toggle-deprecate.dto.js';
 import { QueryResultImagesDto } from './dto/query-result-images.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { CreateAiAnnotationDto } from './dto/create-ai-annotation.dto';
-import { ExportAnnotationsDto } from './dto/export-annotation.dto';
+import { CreateAiAnnotationDto } from './dto/annotation/create-ai-annotation.dto.js';
+import { UpdateAiAnnotationDto } from './dto/annotation/update-ai-annotation.dto.js';
+import { ExportAnnotationsDto } from './dto/annotation/export-annotation.dto.js';
 import type { Response } from 'express';
 import archiver from 'archiver';
 import { SkipTransform } from 'src/common/decorators/skip-transform.decorator';
@@ -126,6 +127,17 @@ export class AiCoreController {
   async saveAnnotation(@Body() dto: CreateAiAnnotationDto) {
     return await this.aiCoreService.saveAnnotationFromDetections(dto);
   }
+
+  // Update AI detections to image_annotations for an image_id
+  @Patch('annotations')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Update AI detections to image_annotations for an image_id',
+  })
+  async patchUpdateAnnotation(@Body() dto: UpdateAiAnnotationDto) {
+    return await this.aiCoreService.updateAnnotationFromDetections(dto);
+  }
+
   /**
    * Lưu/Cập nhật Human Annotation (Draft/Submit)
    * POST /ai-core/result-images/:image_id/human-annotations

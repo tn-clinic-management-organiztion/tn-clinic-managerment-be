@@ -19,7 +19,7 @@ export class PatientProfile {
   @PrimaryColumn('uuid', { name: 'patient_id' })
   patient_id: string;
 
-  // --- RELATIONS (Only PK-FK relationship here) ---
+  // --- RELATIONS ---
   @OneToOne(() => SysUser)
   @JoinColumn({ name: 'patient_id', referencedColumnName: 'user_id' })
   user: SysUser;
