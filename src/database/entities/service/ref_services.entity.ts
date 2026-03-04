@@ -14,12 +14,12 @@ export class RefService {
 
   // --- RAW FK ---
   @Column({ name: 'category_id', type: 'int', nullable: true })
-  category_id?: number | null;
+  category_id: number | null;
 
   // --- RELATION ---
   @ManyToOne(() => RefServiceCategory, { nullable: true })
   @JoinColumn({ name: 'category_id', referencedColumnName: 'category_id' })
-  category?: RefServiceCategory;
+  category: RefServiceCategory | null;
 
   // --- COLUMNS ---
   @Column({ name: 'service_name', length: 255 })
@@ -32,5 +32,5 @@ export class RefService {
     scale: 2,
     nullable: true,
   })
-  unit_price?: string;
+  unit_price: string | null;
 }

@@ -31,10 +31,10 @@ export class ImageAnnotation {
   image_id: string | null;
 
   @Column({ name: 'labeled_by', type: 'uuid', nullable: true })
-  labeled_by?: string | null;
+  labeled_by: string | null;
 
   @Column({ name: 'approved_by', type: 'uuid', nullable: true })
-  approved_by?: string | null;
+  approved_by: string | null;
 
   // --- RELATIONS ---
   @ManyToOne(() => ResultImage, { nullable: false })
@@ -43,11 +43,11 @@ export class ImageAnnotation {
 
   @ManyToOne(() => StaffProfile, { nullable: true })
   @JoinColumn({ name: 'labeled_by', referencedColumnName: 'staff_id' })
-  labeled_by_staff?: StaffProfile;
+  labeled_by_staff: StaffProfile | null;
 
   @ManyToOne(() => StaffProfile, { nullable: true })
   @JoinColumn({ name: 'approved_by', referencedColumnName: 'staff_id' })
-  approved_by_staff?: StaffProfile;
+  approved_by_staff: StaffProfile | null;
 
   // --- COLUMNS ---
   @Column({ name: 'annotation_source', type: 'enum', enum: AnnotationSource })
@@ -56,20 +56,20 @@ export class ImageAnnotation {
   @Column({ name: 'annotation_data', type: 'jsonb' })
   annotation_data: any;
 
-  @Column({ name: 'ai_model_name', length: 100, nullable: true })
-  ai_model_name?: string;
+  @Column({ name: 'ai_model_name', type: 'varchar', length: 100, nullable: true })
+  ai_model_name: string | null;
 
-  @Column({ name: 'ai_model_version', length: 50, nullable: true })
-  ai_model_version?: string;
+  @Column({ name: 'ai_model_version', type: 'varchar', length: 50, nullable: true })
+  ai_model_version: string | null;
 
   @Column({ name: 'labeled_at', type: 'timestamptz', nullable: true })
-  labeled_at?: Date;
+  labeled_at: Date | null;
 
   @Column({ name: 'reviewed_at', type: 'timestamptz', nullable: true })
-  reviewed_at?: Date;
+  reviewed_at: Date | null;
 
   @Column({ name: 'approved_at', type: 'timestamptz', nullable: true })
-  approved_at?: Date | null;
+  approved_at: Date | null;
 
   @Column({
     type: 'enum',
@@ -79,10 +79,10 @@ export class ImageAnnotation {
   annotation_status: AnnotationStatus;
 
   @Column({ name: 'rejection_reason', type: 'text', nullable: true })
-  rejection_reason?: string | null;
+  rejection_reason: string | null;
 
     @Column({ name: 'deprecation_reason', type: 'text', nullable: true })
-  deprecation_reason?: string | null;
+  deprecation_reason: string | null;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   created_at: Date | null;

@@ -13,12 +13,12 @@ export class RefServiceCategory {
 
   // --- RAW FK ---
   @Column({ name: 'parent_id', type: 'int', nullable: true })
-  parent_id?: number | null;
+  parent_id: number | null;
 
   // --- RELATION ---
   @ManyToOne(() => RefServiceCategory, { nullable: true })
   @JoinColumn({ name: 'parent_id', referencedColumnName: 'category_id' })
-  parent?: RefServiceCategory;
+  parent: RefServiceCategory | null;
 
   // --- COLUMNS ---
   @Column({ name: 'category_name', length: 255 })

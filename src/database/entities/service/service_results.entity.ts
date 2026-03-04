@@ -19,26 +19,26 @@ export class ServiceResult {
 
   // --- RAW FKs ---
   @Column({ name: 'request_item_id', type: 'uuid', nullable: true })
-  request_item_id?: string | null;
+  request_item_id: string | null;
 
   @Column({ name: 'technician_id', type: 'uuid', nullable: true })
-  technician_id?: string | null;
+  technician_id: string | null;
 
   // --- RELATIONS ---
   @ManyToOne(() => ServiceRequestItem, { nullable: true })
   @JoinColumn({ name: 'request_item_id', referencedColumnName: 'item_id' })
-  request_item?: ServiceRequestItem;
+  request_item: ServiceRequestItem | null;
 
   @ManyToOne(() => StaffProfile, { nullable: true })
   @JoinColumn({ name: 'technician_id', referencedColumnName: 'staff_id' })
-  technician?: StaffProfile;
+  technician: StaffProfile | null;
 
   // --- COLUMNS ---
   @Column({ name: 'main_conclusion', type: 'text', nullable: true })
-  main_conclusion?: string;
+  main_conclusion: string | null;
 
   @Column({ name: 'report_body_html', type: 'text', nullable: true })
-  report_body_html?: string;
+  report_body_html: string | null;
 
   @Column({ name: 'is_abnormal', default: false })
   is_abnormal: boolean;
@@ -47,7 +47,7 @@ export class ServiceResult {
   result_time: Date;
 
   @DeleteDateColumn({ name: 'deleted_at', type: 'timestamptz', nullable: true })
-  deleted_at?: Date;
+  deleted_at: Date | null;
 
   @OneToMany(() => ResultImage, (img) => img.result)
   images: ResultImage[];

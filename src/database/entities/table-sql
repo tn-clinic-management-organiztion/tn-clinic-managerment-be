@@ -1,11 +1,37 @@
+-- ==========================================
+-- ENUMS (CREATE FIRST - NO DEPENDENCIES)
+-- ==========================================
+
+CREATE TYPE room_type_enum AS ENUM ('CLINIC', 'PARACLINICAL', 'PHARMACY', 'CASHIER', 'ADMIN');
+CREATE TYPE gender_enum AS ENUM ('NAM', 'NU', 'KHAC');
+CREATE TYPE encounter_status_enum AS ENUM ('REGISTERED', 'AWAITING_PAYMENT', 'IN_CONSULTATION', 'COMPLETED');
+CREATE TYPE queue_ticket_type_enum AS ENUM ('REGISTRATION', 'CONSULTATION', 'SERVICE');
+CREATE TYPE queue_source_enum AS ENUM ('ONLINE', 'WALKIN');
+CREATE TYPE queue_status_enum AS ENUM ('WAITING', 'CALLED', 'IN_PROGRESS', 'COMPLETED', 'SKIPPED');
+CREATE TYPE annotation_task_type_enum AS ENUM ('CLASSIFICATION', 'BOUNDING_BOX', 'SEGMENTATION', 'KEYPOINT', 'OCR', 'OTHER');
+CREATE TYPE annotation_source_enum AS ENUM ('AI', 'HUMAN');
+CREATE TYPE annotation_status_enum AS ENUM ('IN_PROGRESS', 'SUBMITTED', 'APPROVED', 'REJECTED', 'DEPRECATED');
+
+-- ==========================================
+-- LEVEL 0: BASE TABLES (NO FK DEPENDENCIES)
+-- ==========================================
+
+-- ==========================================
+-- SYSTEM: ORG ROOMS
+-- ==========================================
 CREATE TABLE IF NOT EXISTS org_rooms (
     room_id SERIAL PRIMARY KEY,
     room_name VARCHAR(100) NOT NULL,
-    room_type VARCHAR(50) CHECK (room_type IN ('CLINIC', 'PARACLINICAL', 'PHARMACY', 'CASHIER', 'ADMIN')),
-    is_active BOOLEAN DEFAULT TRUE
+    room_type room_type_enum,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- ROLES
+CREATE INDEX IF NOT EXISTS idx_org_rooms_room_type ON org_rooms(room_type);
+
+-- ==========================================
+-- AUTH: ROLES
+-- ==========================================
 CREATE TABLE IF NOT EXISTS sys_roles (
     role_id SERIAL PRIMARY KEY,
     role_code VARCHAR(50) UNIQUE NOT NULL,
@@ -13,7 +39,9 @@ CREATE TABLE IF NOT EXISTS sys_roles (
     description TEXT
 );
 
--- USERS
+-- ==========================================
+-- AUTH: USERS
+-- ==========================================
 CREATE TABLE IF NOT EXISTS sys_users (
     user_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     username VARCHAR(100) UNIQUE,
@@ -27,7 +55,14 @@ CREATE TABLE IF NOT EXISTS sys_users (
     deleted_at TIMESTAMPTZ
 );
 
--- SPECIALTIES
+CREATE INDEX IF NOT EXISTS idx_sys_users_username ON sys_users(username);
+CREATE INDEX IF NOT EXISTS idx_sys_users_email ON sys_users(email);
+CREATE INDEX IF NOT EXISTS idx_sys_users_cccd ON sys_users(cccd);
+CREATE INDEX IF NOT EXISTS idx_sys_users_is_active ON sys_users(is_active);
+
+-- ==========================================
+-- CLINICAL: SPECIALTIES
+-- ==========================================
 CREATE TABLE IF NOT EXISTS ref_specialties (
     specialty_id SERIAL PRIMARY KEY,
     specialty_code VARCHAR(50) UNIQUE NOT NULL,
@@ -36,63 +71,141 @@ CREATE TABLE IF NOT EXISTS ref_specialties (
     is_active BOOLEAN DEFAULT TRUE
 );
 
--- ICD10 (MUST be before medical_encounters)
+CREATE INDEX IF NOT EXISTS idx_ref_specialties_code ON ref_specialties(specialty_code);
+
+-- ==========================================
+-- CLINICAL: ICD10 (Self-reference, but can create independently)
+-- ==========================================
 CREATE TABLE IF NOT EXISTS ref_icd10 (
     icd_code VARCHAR(10) PRIMARY KEY,
     name_vi VARCHAR(500) NOT NULL,
     name_en VARCHAR(500),
-    parent_code VARCHAR(10) REFERENCES ref_icd10(icd_code),
+    parent_code VARCHAR(10) REFERENCES ref_icd10(icd_code) ON UPDATE CASCADE ON DELETE NO ACTION,
     level INT,
     is_leaf BOOLEAN DEFAULT FALSE,
     active BOOLEAN DEFAULT TRUE
 );
 
--- STAFF PROFILES (FIX: missing comma after role_id)
+CREATE INDEX IF NOT EXISTS idx_ref_icd10_parent_code ON ref_icd10(parent_code);
+CREATE INDEX IF NOT EXISTS idx_ref_icd10_is_leaf ON ref_icd10(is_leaf);
+CREATE INDEX IF NOT EXISTS idx_ref_icd10_active ON ref_icd10(active);
+
+-- ==========================================
+-- SERVICE: SERVICE CATEGORIES (Self-reference, but can create independently)
+-- ==========================================
+CREATE TABLE IF NOT EXISTS ref_service_categories (
+    category_id SERIAL PRIMARY KEY,
+    category_name VARCHAR(255) NOT NULL,
+    parent_id INT REFERENCES ref_service_categories(category_id) ON UPDATE CASCADE ON DELETE SET NULL,
+    is_system_root BOOLEAN DEFAULT FALSE
+);
+
+CREATE INDEX IF NOT EXISTS idx_ref_service_categories_parent_id ON ref_service_categories(parent_id);
+
+-- ==========================================
+-- LEVEL 1: TABLES DEPENDING ON LEVEL 0
+-- ==========================================
+
+-- ==========================================
+-- AUTH: STAFF PROFILES (FK: sys_users, sys_roles, ref_specialties)
+-- ==========================================
 CREATE TABLE IF NOT EXISTS staff_profiles (
     staff_id UUID PRIMARY KEY REFERENCES sys_users(user_id),
     full_name VARCHAR(255) NOT NULL,
     role_id INT NOT NULL REFERENCES sys_roles(role_id),
-    assigned_room_id INT REFERENCES org_rooms(room_id),
     signature_url VARCHAR(500),
     specialty_id INT REFERENCES ref_specialties(specialty_id),
     deleted_at TIMESTAMPTZ
 );
 
--- PATIENT PROFILES
+CREATE INDEX IF NOT EXISTS idx_staff_profiles_role_id ON staff_profiles(role_id);
+CREATE INDEX IF NOT EXISTS idx_staff_profiles_specialty_id ON staff_profiles(specialty_id);
+
+-- ==========================================
+-- AUTH: PATIENT PROFILES (FK: sys_users)
+-- ==========================================
 CREATE TABLE IF NOT EXISTS patient_profiles (
     patient_id UUID PRIMARY KEY REFERENCES sys_users(user_id),
     full_name VARCHAR(255) NOT NULL,
     dob DATE NOT NULL,
-    gender VARCHAR(10) CHECK (gender IN ('NAM', 'NU', 'KHAC')),
+    gender gender_enum NOT NULL,
     address TEXT,
     medical_history TEXT,
     allergy_history TEXT,
     deleted_at TIMESTAMPTZ
 );
 
--- QUEUE COUNTERS
+CREATE INDEX IF NOT EXISTS idx_patient_profiles_gender ON patient_profiles(gender);
+
+-- ==========================================
+-- SERVICE: SERVICES (FK: ref_service_categories)
+-- ==========================================
+CREATE TABLE IF NOT EXISTS ref_services (
+    service_id SERIAL PRIMARY KEY,
+    category_id INT REFERENCES ref_service_categories(category_id),
+    service_name VARCHAR(255) NOT NULL,
+    unit_price NUMERIC(15,2)
+);
+
+CREATE INDEX IF NOT EXISTS idx_ref_services_category_id ON ref_services(category_id);
+CREATE INDEX IF NOT EXISTS idx_ref_services_name ON ref_services(service_name);
+
+-- ==========================================
+-- LEVEL 2: TABLES DEPENDING ON LEVEL 1
+-- ==========================================
+
+-- ==========================================
+-- SCHEDULE: STAFF ROOM SCHEDULES (FK: staff_profiles, org_rooms)
+-- ==========================================
+CREATE TABLE IF NOT EXISTS staff_room_schedules (
+    schedule_id  SERIAL PRIMARY KEY,
+    staff_id     UUID REFERENCES staff_profiles(staff_id),
+    room_id      INT  REFERENCES org_rooms(room_id),
+    work_date    DATE NOT NULL,
+    shift        VARCHAR(10) CHECK (shift IN ('MORNING','AFTERNOON','FULL_DAY')),
+    is_active    BOOLEAN DEFAULT TRUE,
+    created_at   TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE (staff_id, room_id, work_date, shift)
+);
+
+CREATE INDEX IF NOT EXISTS idx_staff_room_schedules_staff_id ON staff_room_schedules(staff_id);
+CREATE INDEX IF NOT EXISTS idx_staff_room_schedules_room_id ON staff_room_schedules(room_id);
+CREATE INDEX IF NOT EXISTS idx_staff_room_schedules_work_date ON staff_room_schedules(work_date);
+
+-- ==========================================
+-- SYSTEM: ROOM SERVICES (FK: org_rooms, ref_services)
+-- ==========================================
+CREATE TABLE IF NOT EXISTS room_services (
+    room_id INT REFERENCES org_rooms(room_id) ON UPDATE CASCADE ON DELETE CASCADE,
+    service_id INT REFERENCES ref_services(service_id) ON UPDATE CASCADE ON DELETE CASCADE,
+    PRIMARY KEY (room_id, service_id)
+);
+
+-- ==========================================
+-- RECEPTION: QUEUE COUNTERS (FK: org_rooms)
+-- ==========================================
 CREATE TABLE IF NOT EXISTS queue_counters (
     counter_id SERIAL PRIMARY KEY,
     room_id INT NOT NULL REFERENCES org_rooms(room_id),
-    ticket_type VARCHAR(20) NOT NULL CHECK (ticket_type IN ('REGISTRATION', 'CONSULTATION', 'SERVICE')),
+    ticket_type queue_ticket_type_enum NOT NULL,
     last_number INT DEFAULT 0,
     reset_date DATE DEFAULT CURRENT_DATE,
     UNIQUE(room_id, ticket_type, reset_date)
 );
 
--- MEDICAL ENCOUNTERS
+CREATE INDEX IF NOT EXISTS idx_queue_counters_room_id ON queue_counters(room_id);
+CREATE INDEX IF NOT EXISTS idx_queue_counters_ticket_type ON queue_counters(ticket_type);
+
+-- ==========================================
+-- CLINICAL: MEDICAL ENCOUNTERS (FK: patient_profiles, staff_profiles, ref_icd10)
+-- ==========================================
 CREATE TABLE IF NOT EXISTS medical_encounters (
     encounter_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     patient_id UUID REFERENCES patient_profiles(patient_id),
     doctor_id UUID REFERENCES staff_profiles(staff_id),
-    assigned_room_id INT REFERENCES org_rooms(room_id),
     visit_date TIMESTAMPTZ DEFAULT NOW(),
-    current_status VARCHAR(50) DEFAULT 'REGISTERED' CHECK (current_status IN (
-        'REGISTERED', 'AWAITING_PAYMENT', 'IN_CONSULTATION',
-        'AWAITING_CLS', 'IN_CLS', 'CLS_COMPLETED', 'RESULTS_READY', 'COMPLETED'
-    )),
+    current_status encounter_status_enum DEFAULT 'REGISTERED',
     initial_symptoms TEXT,
-
     weight NUMERIC(5,2),
     height NUMERIC(5,2),
     bmi NUMERIC(4,2),
@@ -102,73 +215,115 @@ CREATE TABLE IF NOT EXISTS medical_encounters (
     bp_systolic INT,
     bp_diastolic INT,
     sp_o2 NUMERIC(5,2),
-
     final_icd_code VARCHAR(10) REFERENCES ref_icd10(icd_code),
     doctor_conclusion TEXT,
     deleted_at TIMESTAMPTZ
 );
 
--- QUEUE TICKETS
+CREATE INDEX IF NOT EXISTS idx_medical_encounters_patient_id ON medical_encounters(patient_id);
+CREATE INDEX IF NOT EXISTS idx_medical_encounters_doctor_id ON medical_encounters(doctor_id);
+CREATE INDEX IF NOT EXISTS idx_medical_encounters_final_icd_code ON medical_encounters(final_icd_code);
+CREATE INDEX IF NOT EXISTS idx_medical_encounters_visit_date ON medical_encounters(visit_date);
+
+-- ==========================================
+-- LEVEL 3: TABLES DEPENDING ON LEVEL 2
+-- ==========================================
+
+-- ==========================================
+-- RECEPTION: QUEUE TICKETS (FK: medical_encounters, org_rooms)
+-- ==========================================
 CREATE TABLE IF NOT EXISTS queue_tickets (
     ticket_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     encounter_id UUID REFERENCES medical_encounters(encounter_id),
     room_id INT NOT NULL REFERENCES org_rooms(room_id),
-    ticket_type VARCHAR(20) NOT NULL CHECK (ticket_type IN ('REGISTRATION', 'CONSULTATION', 'SERVICE')),
+    ticket_type queue_ticket_type_enum NOT NULL,
     display_number INT NOT NULL,
-    source VARCHAR(20) DEFAULT 'WALKIN' CHECK (source IN ('ONLINE', 'WALKIN')),
-    status VARCHAR(20) NOT NULL DEFAULT 'WAITING'
-        CHECK (status IN ('WAITING', 'CALLED', 'IN_PROGRESS', 'COMPLETED', 'SKIPPED')),
+    source queue_source_enum DEFAULT 'WALKIN',
+    status queue_status_enum NOT NULL DEFAULT 'WAITING',
     created_at TIMESTAMPTZ DEFAULT NOW(),
     called_at TIMESTAMPTZ,
     started_at TIMESTAMPTZ,
-    service_ids INT[],
     completed_at TIMESTAMPTZ
 );
 
-CREATE INDEX IF NOT EXISTS idx_queue_tickets_service_ids
-ON queue_tickets USING GIN(service_ids);
+CREATE INDEX IF NOT EXISTS idx_queue_tickets_encounter_id ON queue_tickets(encounter_id);
+CREATE INDEX IF NOT EXISTS idx_queue_tickets_room_id ON queue_tickets(room_id);
+CREATE INDEX IF NOT EXISTS idx_queue_tickets_status ON queue_tickets(status);
+CREATE INDEX IF NOT EXISTS idx_queue_tickets_created_at ON queue_tickets(created_at);
 
--- SERVICE CATEGORIES
-CREATE TABLE IF NOT EXISTS ref_service_categories (
-    category_id SERIAL PRIMARY KEY,
-    category_name VARCHAR(255) NOT NULL,
-    parent_id INT REFERENCES ref_service_categories(category_id),
-    is_system_root BOOLEAN DEFAULT FALSE
-);
-
--- SERVICES (NO result_input_type) + FIX: remove trailing comma
-CREATE TABLE IF NOT EXISTS ref_services (
-    service_id SERIAL PRIMARY KEY,
-    category_id INT REFERENCES ref_service_categories(category_id),
-    service_name VARCHAR(255) NOT NULL,
-    unit_price DECIMAL(15,2)
-);
-
--- ROOM_SERVICES
-CREATE TABLE IF NOT EXISTS room_services (
-    room_id INT REFERENCES org_rooms(room_id),
-    service_id INT REFERENCES ref_services(service_id),
-    PRIMARY KEY (room_id, service_id)
-);
-
--- SERVICE REQUESTS
+-- ==========================================
+-- PARACLINICAL: SERVICE REQUESTS (FK: medical_encounters, staff_profiles)
+-- ==========================================
 CREATE TABLE IF NOT EXISTS service_requests (
     request_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     encounter_id UUID REFERENCES medical_encounters(encounter_id),
     requesting_doctor_id UUID REFERENCES staff_profiles(staff_id),
+    request_code VARCHAR(50) UNIQUE NOT NULL,  -- SR001, SR002...
     created_at TIMESTAMPTZ DEFAULT NOW(),
     notes TEXT,
     deleted_at TIMESTAMPTZ
 );
 
--- SERVICE REQUEST ITEMS + FIX: remove trailing comma
-CREATE TABLE IF NOT EXISTS service_request_items (
-    item_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    request_id UUID REFERENCES service_requests(request_id),
-    service_id INT REFERENCES ref_services(service_id)
+CREATE INDEX IF NOT EXISTS idx_service_requests_encounter_id ON service_requests(encounter_id);
+CREATE INDEX IF NOT EXISTS idx_service_requests_requesting_doctor_id ON service_requests(requesting_doctor_id);
+
+-- ==========================================
+-- AI: ANNOTATION PROJECTS (FK: staff_profiles)
+-- ==========================================
+CREATE TABLE IF NOT EXISTS annotation_projects (
+    project_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    task_type annotation_task_type_enum NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_by UUID REFERENCES staff_profiles(staff_id),
+    created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- SERVICE RESULTS
+CREATE INDEX IF NOT EXISTS idx_annotation_projects_created_by ON annotation_projects(created_by);
+CREATE INDEX IF NOT EXISTS idx_annotation_projects_is_active ON annotation_projects(is_active);
+CREATE INDEX IF NOT EXISTS idx_annotation_projects_task_type ON annotation_projects(task_type);
+
+-- ==========================================
+-- LEVEL 4: TABLES DEPENDING ON LEVEL 3
+-- ==========================================
+
+-- ==========================================
+-- PARACLINICAL: SERVICE REQUEST ITEMS (FK: queue_tickets, service_requests, ref_services)
+-- ==========================================
+CREATE TABLE IF NOT EXISTS service_request_items (
+    item_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    request_id UUID NOT NULL REFERENCES service_requests(request_id),
+    service_id INT NOT NULL REFERENCES ref_services(service_id),
+    item_status VARCHAR(20) DEFAULT 'PENDING' CHECK (
+        item_status IN ('PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED')
+    ),
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ==========================================
+-- JUNCTION TABLE: Ticket ↔ Service Items
+-- ==========================================
+CREATE TABLE ticket_service_items (
+    ticket_id UUID NOT NULL REFERENCES queue_tickets(ticket_id),
+    item_id UUID NOT NULL REFERENCES service_request_items(item_id),
+    PRIMARY KEY (ticket_id, item_id)
+);
+
+CREATE INDEX idx_ticket_service_items_ticket ON ticket_service_items(ticket_id);
+CREATE INDEX idx_ticket_service_items_item ON ticket_service_items(item_id);
+
+CREATE INDEX IF NOT EXISTS idx_service_request_items_queue_ticket_id ON service_request_items(queue_ticket_id);
+CREATE INDEX IF NOT EXISTS idx_service_request_items_request_id ON service_request_items(request_id);
+CREATE INDEX IF NOT EXISTS idx_service_request_items_service_id ON service_request_items(service_id);
+
+-- ==========================================
+-- LEVEL 5: TABLES DEPENDING ON LEVEL 4
+-- ==========================================
+
+-- ==========================================
+-- PARACLINICAL: SERVICE RESULTS (FK: service_request_items, staff_profiles)
+-- ==========================================
 CREATE TABLE IF NOT EXISTS service_results (
     result_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     request_item_id UUID REFERENCES service_request_items(item_id),
@@ -180,7 +335,17 @@ CREATE TABLE IF NOT EXISTS service_results (
     deleted_at TIMESTAMPTZ
 );
 
--- RESULT IMAGES
+CREATE INDEX IF NOT EXISTS idx_service_results_request_item_id ON service_results(request_item_id);
+CREATE INDEX IF NOT EXISTS idx_service_results_technician_id ON service_results(technician_id);
+CREATE INDEX IF NOT EXISTS idx_service_results_is_abnormal ON service_results(is_abnormal);
+
+-- ==========================================
+-- LEVEL 6: TABLES DEPENDING ON LEVEL 5
+-- ==========================================
+
+-- ==========================================
+-- PARACLINICAL: RESULT IMAGES (FK: service_results, staff_profiles)
+-- ==========================================
 CREATE TABLE IF NOT EXISTS result_images (
     image_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     result_id UUID REFERENCES service_results(result_id),
@@ -190,46 +355,55 @@ CREATE TABLE IF NOT EXISTS result_images (
     file_size BIGINT,
     mime_type VARCHAR(100),
     image_width INT,
-    imgae_height INT,
+    image_height INT,
     uploaded_at TIMESTAMPTZ DEFAULT NOW(),
     uploaded_by UUID NOT NULL REFERENCES staff_profiles(staff_id)
 );
 
--- ANNOTATION
-CREATE TABLE IF NOT EXISTS annotation_projects (
-    project_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    name VARCHAR(255) NOT NULL,
-    description TEXT,
-    task_type VARCHAR(50) NOT NULL CHECK (task_type IN (
-        'CLASSIFICATION','BOUNDING_BOX','SEGMENTATION','KEYPOINT','OCR','OTHER'
-    )),
-    is_active BOOLEAN DEFAULT TRUE,
-    created_by UUID REFERENCES staff_profiles(staff_id),
-    created_at TIMESTAMPTZ DEFAULT NOW()
-);
+CREATE INDEX IF NOT EXISTS idx_result_images_result_id ON result_images(result_id);
+CREATE INDEX IF NOT EXISTS idx_result_images_uploaded_by ON result_images(uploaded_by);
+CREATE INDEX IF NOT EXISTS idx_result_images_uploaded_at ON result_images(uploaded_at);
 
+-- ==========================================
+-- LEVEL 7: TABLES DEPENDING ON LEVEL 6
+-- ==========================================
+
+-- ==========================================
+-- AI: IMAGE ANNOTATIONS (FK: result_images, staff_profiles)
+-- ==========================================
 CREATE TABLE IF NOT EXISTS image_annotations (
     annotation_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     image_id UUID NOT NULL REFERENCES result_images(image_id),
-    annotation_source VARCHAR(20) NOT NULL CHECK (annotation_source IN ('AI', 'HUMAN')),
+    annotation_source annotation_source_enum NOT NULL,
     annotation_data JSONB NOT NULL,
     ai_model_name VARCHAR(100),
     ai_model_version VARCHAR(50),
     labeled_by UUID REFERENCES staff_profiles(staff_id),
-    labeled_at TIMESTAMPTZ DEFAULT NOW(),
+    labeled_at TIMESTAMPTZ,
+    reviewed_at TIMESTAMPTZ,
     approved_by UUID REFERENCES staff_profiles(staff_id),
     approved_at TIMESTAMPTZ,
-    annotation_status VARCHAR(20) DEFAULT 'IN_PROGRESS'
-        CHECK (annotation_status IN ('IN_PROGRESS','SUBMITTED','APPROVED','REJECTED','DEPRECATED')),
+    annotation_status annotation_status_enum DEFAULT 'IN_PROGRESS',
     rejection_reason TEXT,
     deprecation_reason TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE INDEX IF NOT EXISTS idx_image_annotations_image_id ON image_annotations(image_id);
+CREATE INDEX IF NOT EXISTS idx_image_annotations_labeled_by ON image_annotations(labeled_by);
+CREATE INDEX IF NOT EXISTS idx_image_annotations_approved_by ON image_annotations(approved_by);
+CREATE INDEX IF NOT EXISTS idx_image_annotations_annotation_status ON image_annotations(annotation_status);
+CREATE INDEX IF NOT EXISTS idx_image_annotations_annotation_source ON image_annotations(annotation_source);
+
+-- ==========================================
+-- AI: ANNOTATION PROJECT IMAGES (FK: annotation_projects, result_images, staff_profiles)
+-- ==========================================
 CREATE TABLE IF NOT EXISTS annotation_project_images (
-    project_id UUID NOT NULL REFERENCES annotation_projects(project_id),
-    image_id UUID NOT NULL REFERENCES result_images(image_id),
+    project_id UUID NOT NULL REFERENCES annotation_projects(project_id) ON UPDATE CASCADE ON DELETE CASCADE,
+    image_id UUID NOT NULL REFERENCES result_images(image_id) ON UPDATE CASCADE ON DELETE CASCADE,
     added_by UUID REFERENCES staff_profiles(staff_id),
     added_at TIMESTAMPTZ DEFAULT NOW(),
     PRIMARY KEY (project_id, image_id)
 );
+
+CREATE INDEX IF NOT EXISTS idx_annotation_project_images_added_by ON annotation_project_images(added_by);

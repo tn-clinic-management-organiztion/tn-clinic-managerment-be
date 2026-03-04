@@ -10,31 +10,29 @@ import { ServiceResult } from 'src/database/entities/service/service_results.ent
 import { ResultImage } from 'src/database/entities/service/result_images.entity';
 
 // Services Module
-import { ServicesController } from './services/services.controller';
-import { ServicesService } from './services/services.service';
+import { ServicesController } from '../system/services-dv/services.controller';
+import { ServicesService } from '../system/services-dv/services.service';
 
 // Service Orders Module
-import { ServiceOrdersController } from './service-orders/service-orders.controller';
-import { ServiceOrdersService } from './service-orders/service-orders.service';
+import { ServiceRequestsController } from './controllers/service-requests.controller';
+import { ServiceRequestsService } from './services/service-requests.service';
 
 // Results Module
-import { ResultsController } from './results/results.controller';
-import { ResultsService } from './results/results.service';
+import { ResultsController } from './controllers/results.controller';
+import { ResultsService } from './services/results.service';
 
 // Shared Services
 import { CloudinaryModule } from 'src/shared/cloudinary/cloudinary.module';
+import { ServiceRequestItemsRepository } from 'src/modules/paraclinical/repositories/service-requests/service-request-items.repository';
+import { ServiceRequestsRepository } from 'src/modules/paraclinical/repositories/service-requests/service-requests.repository';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
-      // Service entities
-      RefService,
-      RefServiceCategory,
-      
-      // Order entities
+      // Service request entities
       ServiceRequest,
       ServiceRequestItem,
-      
+
       // Result entities
       ServiceResult,
       ResultImage,
@@ -42,19 +40,20 @@ import { CloudinaryModule } from 'src/shared/cloudinary/cloudinary.module';
     CloudinaryModule,
   ],
   controllers: [
-    ServicesController,
-    ServiceOrdersController,
+    ServiceRequestsController,
     ResultsController,
   ],
   providers: [
-    ServicesService,
-    ServiceOrdersService,
+    ServiceRequestsService,
     ResultsService,
+    ServiceRequestItemsRepository,
+    ServiceRequestsRepository,
   ],
   exports: [
-    ServicesService,
-    ServiceOrdersService,
+    ServiceRequestsService,
     ResultsService,
+    ServiceRequestItemsRepository,
+    ServiceRequestsRepository,
   ],
 })
 export class ParaclinicalModule {}

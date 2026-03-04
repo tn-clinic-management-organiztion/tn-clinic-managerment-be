@@ -18,11 +18,14 @@ import { RoomService } from 'src/database/entities/service/room_services.entity'
 import { ServiceRequestItem } from 'src/database/entities/service/service_request_items.entity';
 import { ServiceRequest } from 'src/database/entities/service/service_requests.entity';
 import { ServiceResult } from 'src/database/entities/service/service_results.entity';
+import { StaffRoomSchedule } from 'src/database/entities/schedule/staff_room_schedules.entity';
+import { TicketServiceItem } from 'src/database/entities/service/ticket_service_items.entity';
 
 const ALL_ENTITIES = [
   // Auth & Core
   SysUser,
   SysRole,
+  StaffRoomSchedule,
   StaffProfile,
   PatientProfile,
   OrgRoom,
@@ -42,6 +45,7 @@ const ALL_ENTITIES = [
   ServiceRequestItem,
   ServiceResult,
   ResultImage,
+  TicketServiceItem,
 
   // Annotation
   AnnotationProject,

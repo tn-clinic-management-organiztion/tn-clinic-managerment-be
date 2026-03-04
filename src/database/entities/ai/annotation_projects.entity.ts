@@ -24,19 +24,19 @@ export class AnnotationProject {
 
   // --- RAW FKs ---
   @Column({ name: 'created_by', type: 'uuid', nullable: true })
-  created_by?: string | null;
+  created_by: string | null;
 
   // --- RELATIONS ---
   @ManyToOne(() => StaffProfile, { nullable: true })
   @JoinColumn({ name: 'created_by', referencedColumnName: 'staff_id' })
-  creator?: StaffProfile;
+  creator: StaffProfile | null;
 
   // --- COLUMNS ---
   @Column({ name: 'name', length: 255 })
   name: string;
 
   @Column({ name: 'description', type: 'text', nullable: true })
-  description?: string;
+  description: string | null;
 
   @Column({ name: 'task_type', type: 'enum', enum: AnnotationTaskType })
   task_type: AnnotationTaskType;

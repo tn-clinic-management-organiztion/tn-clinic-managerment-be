@@ -9,6 +9,7 @@ import { SysRoleSeeder } from './seeders/sys_roles.seeder';
 import { OrgRoomSeeder } from './seeders/org_rooms.seeder';
 import { DataSource } from 'typeorm';
 import { RefIcd10Seeder } from './seeders/ref_icd10.seeder';
+import { StaffRoomScheduleSeeder } from 'src/database/seeds/seeders/staff_room_schedules.entity.seeder';
 
 
 export class MainSeeder {
@@ -26,6 +27,7 @@ export class MainSeeder {
       await new RefServiceCategorySeeder().run(dataSource);
       await new RefServiceSeeder().run(dataSource);
       await new RoomServiceSeeder().run(dataSource);
+      await new StaffRoomScheduleSeeder().run(dataSource);
 
       console.log('\nDatabase seeding completed successfully!');
     } catch (error) {

@@ -35,14 +35,14 @@ export class PatientProfile {
   gender: Gender;
 
   @Column({ name: 'address', type: 'text', nullable: true })
-  address?: string;
+  address: string | null;
 
   @Column({ name: 'medical_history', type: 'text', nullable: true })
-  medical_history?: string;
+  medical_history: string | null;
 
   @Column({ name: 'allergy_history', type: 'text', nullable: true })
-  allergy_history?: string;
+  allergy_history: string | null;
 
   @DeleteDateColumn({ name: 'deleted_at', type: 'timestamptz', nullable: true })
-  deleted_at?: Date;
+  deleted_at: Date | null;
 }

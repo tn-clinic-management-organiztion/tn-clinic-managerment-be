@@ -270,6 +270,43 @@ npm run migration:show
    ```
 
 
+   ## ⚠️ Cảnh báo — Script reset/refresh Database
+
+   Trong `package.json` có một số script thực hiện thao tác xóa/dọn sạch database rồi chạy lại migration và seed. Những script này sẽ xóa dữ liệu hiện có trong database và nạp lại dữ liệu mẫu. Hãy chắc chắn sao lưu dữ liệu trước khi chạy trên môi trường quan trọng.
+
+   Các script quan trọng:
+
+   - `npm run db:reset` — Chạy `src/database/reset-db.ts` (thường dọn sạch hoặc reset database).
+   - `npm run seed:run` — Chạy `src/database/seed.ts` để nạp dữ liệu mẫu (seed).
+   - `npm run db:fresh` — Thực hiện tuần tự: `db:reset` -> `migration:run` -> `seed:run`. Tương đương với:
+
+   ```bash
+   npm run db:reset && npm run migration:run && npm run seed:run
+   ```
+
+   - `npm run migration:run:seed` — Chạy migration rồi chạy seed.
+
+   Ví dụ sử dụng an toàn:
+
+   - Chỉ cập nhật schema (không xóa dữ liệu):
+
+   ```bash
+   npm run migration:run
+   ```
+
+   - Làm mới toàn bộ database (CẢNH BÁO: xóa dữ liệu hiện tại):
+
+   ```bash
+   npm run db:fresh
+   ```
+
+   Lưu ý cho môi trường production:
+
+   - KHÔNG chạy `db:reset`, `db:fresh` hoặc các script xóa dữ liệu trên database production.
+   - Nếu cần migration trên production, chỉ chạy `npm run migration:run` và thực hiện backup trước.
+
+   Kiểm tra kỹ `NODE_ENV` hoặc biến môi trường trước khi chạy các script này.
+
 ## 🚀 Scripts có sẵn
 
 ```bash

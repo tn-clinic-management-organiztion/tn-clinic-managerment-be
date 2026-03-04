@@ -32,7 +32,7 @@ export class QueueTicket {
   ticket_id: string;
 
   @Column({ name: 'encounter_id', type: 'uuid', nullable: true })
-  encounter_id?: string | null;
+  encounter_id: string | null;
 
   @Column({ name: 'room_id', type: 'int' })
   room_id: number;
@@ -40,7 +40,7 @@ export class QueueTicket {
   // --- RELATIONS ---
   @ManyToOne(() => MedicalEncounter, { nullable: true })
   @JoinColumn({ name: 'encounter_id', referencedColumnName: 'encounter_id' })
-  encounter?: MedicalEncounter;
+  encounter: MedicalEncounter | null;
 
   @ManyToOne(() => OrgRoom, { nullable: false })
   @JoinColumn({ name: 'room_id', referencedColumnName: 'room_id' })
@@ -73,14 +73,11 @@ export class QueueTicket {
   created_at: Date;
 
   @Column({ name: 'called_at', type: 'timestamptz', nullable: true })
-  called_at?: Date;
+  called_at: Date | null;
 
   @Column({ name: 'started_at', type: 'timestamptz', nullable: true })
-  started_at?: Date;
-
-  @Column({ name: 'service_ids', type: 'int', array: true, nullable: true })
-  service_ids?: number[];
+  started_at: Date | null;
 
   @Column({ name: 'completed_at', type: 'timestamptz', nullable: true })
-  completed_at?: Date;
+  completed_at: Date | null;
 }

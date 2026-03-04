@@ -14,7 +14,7 @@ export class RefSpecialtySeeder {
     for (const specialtyData of specialtiesData) {
       const specialtyPayload = {
         ...specialtyData,
-        description: specialtyData.description ?? undefined,
+        description: specialtyData.description ?? null,
       };
       const speicalty = refSpecialtyRepository.create(specialtyPayload);
       await refSpecialtyRepository.save(refSpecialtyRepository.create(speicalty));

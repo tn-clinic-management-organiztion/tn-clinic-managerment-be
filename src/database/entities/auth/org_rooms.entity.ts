@@ -17,7 +17,7 @@ export class OrgRoom {
   room_name: string;
 
   @Column({ name: 'room_type', type: 'enum', enum: RoomType, nullable: true })
-  room_type: RoomType;
+  room_type: RoomType | null;
 
   @Column({ name: 'is_active', default: true })
   is_active: boolean;

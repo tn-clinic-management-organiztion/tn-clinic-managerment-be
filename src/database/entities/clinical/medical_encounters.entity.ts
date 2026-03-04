@@ -15,10 +15,6 @@ export enum EncounterStatus {
   REGISTERED = 'REGISTERED',
   AWAITING_PAYMENT = 'AWAITING_PAYMENT',
   IN_CONSULTATION = 'IN_CONSULTATION',
-  AWAITING_CLS = 'AWAITING_CLS',
-  IN_CLS = 'IN_CLS',
-  CLS_COMPLETED = 'CLS_COMPLETED',
-  RESULTS_READY = 'RESULTS_READY',
   COMPLETED = 'COMPLETED',
 }
 
@@ -35,33 +31,26 @@ export class MedicalEncounter {
 
   // --- RAW FKs ---
   @Column({ name: 'patient_id', type: 'uuid', nullable: true })
-  patient_id?: string | null;
+  patient_id: string | null;
 
   @Column({ name: 'doctor_id', type: 'uuid', nullable: true })
-  doctor_id?: string | null;
+  doctor_id: string | null;
 
-  @Column({ name: 'assigned_room_id', type: 'int', nullable: true })
-  assigned_room_id?: number | null;
-
-  @Column({ name: 'final_icd_code', length: 10, nullable: true })
-  final_icd_code?: string | null;
+  @Column({ name: 'final_icd_code', type: 'varchar', length: 10, nullable: true })
+  final_icd_code: string | null;
 
   // --- RELATIONS ---
   @ManyToOne(() => PatientProfile, { nullable: true })
   @JoinColumn({ name: 'patient_id', referencedColumnName: 'patient_id' })
-  patient?: PatientProfile;
+  patient: PatientProfile | null;
 
   @ManyToOne(() => StaffProfile, { nullable: true })
   @JoinColumn({ name: 'doctor_id', referencedColumnName: 'staff_id' })
-  doctor?: StaffProfile;
-
-  @ManyToOne(() => OrgRoom, { nullable: true })
-  @JoinColumn({ name: 'assigned_room_id', referencedColumnName: 'room_id' })
-  assigned_room?: OrgRoom;
+  doctor: StaffProfile | null;
 
   @ManyToOne(() => RefIcd10, { nullable: true })
   @JoinColumn({ name: 'final_icd_code', referencedColumnName: 'icd_code' })
-  icd_ref?: RefIcd10;
+  icd_ref: RefIcd10 | null;
 
   // --- COLUMNS ---
   @Column({ name: 'visit_date', type: 'timestamptz', default: () => 'NOW()' })
@@ -76,7 +65,7 @@ export class MedicalEncounter {
   current_status: EncounterStatus;
 
   @Column({ name: 'initial_symptoms', type: 'text', nullable: true })
-  initial_symptoms?: string;
+  initial_symptoms: string | null ;
 
   // --- VITAL SIGNS (CHỈ SỐ SINH HIỆU) ---
   @Column({
@@ -87,7 +76,7 @@ export class MedicalEncounter {
     nullable: true,
     transformer: numericTransformer,
   })
-  weight?: number; // Cân nặng (kg)
+  weight: number | null; // Cân nặng (kg)
 
   @Column({
     name: 'height',
@@ -97,7 +86,7 @@ export class MedicalEncounter {
     nullable: true,
     transformer: numericTransformer,
   })
-  height?: number; // Chiều cao (cm)
+  height: number | null; // Chiều cao (cm)
 
   @Column({
     name: 'bmi',
@@ -107,7 +96,7 @@ export class MedicalEncounter {
     nullable: true,
     transformer: numericTransformer,
   })
-  bmi?: number; // BMI
+  bmi: number | null; // BMI
 
   @Column({
     name: 'temperature',
@@ -117,19 +106,19 @@ export class MedicalEncounter {
     nullable: true,
     transformer: numericTransformer,
   })
-  temperature?: number; // Nhiệt độ (°C)
+  temperature: number | null; // Nhiệt độ (°C)
 
   @Column({ name: 'pulse', type: 'int', nullable: true })
-  pulse?: number; // Mạch (lần/phút)
+  pulse: number | null; // Mạch (lần/phút)
 
   @Column({ name: 'respiratory_rate', type: 'int', nullable: true })
-  respiratory_rate?: number; // Nhịp thở (lần/phút)
+  respiratory_rate: number | null; // Nhịp thở (lần/phút)
 
   @Column({ name: 'bp_systolic', type: 'int', nullable: true })
-  bp_systolic?: number; // Huyết áp tâm thu (số trên)
+  bp_systolic: number | null; // Huyết áp tâm thu (số trên)
 
   @Column({ name: 'bp_diastolic', type: 'int', nullable: true })
-  bp_diastolic?: number; // Huyết áp tâm trương (số dưới)
+  bp_diastolic: number | null; // Huyết áp tâm trương (số dưới)
 
   @Column({
     name: 'sp_o2',
@@ -139,12 +128,12 @@ export class MedicalEncounter {
     nullable: true,
     transformer: numericTransformer,
   })
-  sp_o2?: number; // SpO2 (%)
+  sp_o2: number | null; // SpO2 (%)
 
   // --- CONCLUSIONS ---
   @Column({ name: 'doctor_conclusion', type: 'text', nullable: true })
-  doctor_conclusion?: string;
+  doctor_conclusion: string | null;
 
   @DeleteDateColumn({ name: 'deleted_at', type: 'timestamptz', nullable: true })
-  deleted_at?: Date;
+  deleted_at: Date | null;
 }

@@ -15,13 +15,13 @@ export class SysUserSeeder {
     for (const userData of usersData) {
       let userPayload = {
         ...userData,
-        username: userData.username ?? undefined,
-        password: userData.password ?? undefined,
-        email: userData.email ?? undefined,
-        phone: userData.phone ?? undefined,
-        cccd: userData.cccd ?? undefined,
-        refresh_token_hash: userData.refresh_token_hash ?? undefined,
-        deleted_at: userData.deleted_at ?? undefined,
+        username: userData.username ?? null,
+        password: userData.password ?? null,
+        email: userData.email ?? null,
+        phone: userData.phone ?? null,
+        cccd: userData.cccd ?? null,
+        refresh_token_hash: userData.refresh_token_hash ?? null,
+        deleted_at: userData.deleted_at ?? null,
       };
       if (userPayload.password) {
         userPayload = {

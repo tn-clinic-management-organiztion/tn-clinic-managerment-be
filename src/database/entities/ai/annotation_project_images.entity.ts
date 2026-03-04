@@ -14,7 +14,7 @@ export class AnnotationProjectImage {
 
   // --- RAW FKs ---
   @Column({ name: 'added_by', type: 'uuid', nullable: true })
-  added_by?: string | null;
+  added_by: string | null;
 
   // --- RELATIONS ---
   @ManyToOne(() => AnnotationProject)

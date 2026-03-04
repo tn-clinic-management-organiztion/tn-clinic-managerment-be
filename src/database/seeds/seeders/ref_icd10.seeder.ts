@@ -15,15 +15,15 @@ export class RefIcd10Seeder {
     for (const icdData of icdsData) {
       const icdPaylaod = {
         ...icdData,
-        parent_code: icdData.parent_code ?? undefined,
-        name_en: icdData.name_en ?? undefined,
-        level: icdData.level ?? undefined,
+        parent_code: icdData.parent_code ?? null,
+        name_en: icdData.name_en ?? null,
+        level: icdData.level ?? null,
       };
 
       const icd = refIcd10Repository.create(icdPaylaod);
       await refIcd10Repository.save(refIcd10Repository.create(icd));
     }
-
+    
     console.log(`Seeded ${icdsData.length} ICD10 codes`);
   }
 }

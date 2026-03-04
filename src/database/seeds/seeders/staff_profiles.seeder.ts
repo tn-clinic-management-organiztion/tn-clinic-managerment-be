@@ -15,10 +15,9 @@ export class StaffProfileSeeder {
     for (const staffProfileData of staffProfilesData) {
       const staffProfilePayload = {
         ...staffProfileData,
-        assigned_room_id: staffProfileData.assigned_room_id ?? undefined,
-        specialty_id: staffProfileData.specialty_id ?? undefined, 
-        signature_url: staffProfileData.signature_url ?? undefined,
-        deleted_at: staffProfileData.deleted_at ?? undefined,
+        specialty_id: staffProfileData.specialty_id ?? null, 
+        signature_url: staffProfileData.signature_url ?? null,
+        deleted_at: staffProfileData.deleted_at ?? null,
       }
       const staffProfile = staffProfileRepository.create(staffProfilePayload);
       await staffProfileRepository.save(staffProfile);
