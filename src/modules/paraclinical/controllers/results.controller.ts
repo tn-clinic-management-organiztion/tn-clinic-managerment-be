@@ -22,8 +22,8 @@ import { BulkUploadImagesDto } from 'src/modules/paraclinical/dto/results/images
 import { QueryResultImageDto } from 'src/modules/paraclinical/dto/results/images/query-image.dto';
 import { UpdateResultImageDto } from 'src/modules/paraclinical/dto/results/images/update-image.dto';
 
-@ApiTags('Results')
-@Controller('results')
+@ApiTags('paraclinical/Results')
+@Controller('paraclinical/results')
 export class ResultsController {
   constructor(private readonly resultsService: ResultsService) {}
 
@@ -37,6 +37,7 @@ export class ResultsController {
   @Get()
   @ApiOperation({ summary: 'Get all results with pagination' })
   findAllResults(@Query() query: QueryResultDto) {
+    console.log('Hehe controller');
     return this.resultsService.findAllResults(query);
   }
 
@@ -106,7 +107,9 @@ export class ResultsController {
   }
 
   @Delete('images/:id')
-  @ApiOperation({ summary: 'Delete image and from Cloudinary (delete annotations)' })
+  @ApiOperation({
+    summary: 'Delete image and from Cloudinary (delete annotations)',
+  })
   removeImage(@Param('id') id: string) {
     return this.resultsService.deleteImage(id);
   }

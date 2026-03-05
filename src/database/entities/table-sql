@@ -295,10 +295,6 @@ CREATE TABLE IF NOT EXISTS service_request_items (
     item_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     request_id UUID NOT NULL REFERENCES service_requests(request_id),
     service_id INT NOT NULL REFERENCES ref_services(service_id),
-    item_status VARCHAR(20) DEFAULT 'PENDING' CHECK (
-        item_status IN ('PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED')
-    ),
-    created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- ==========================================

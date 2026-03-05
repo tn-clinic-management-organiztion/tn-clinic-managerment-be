@@ -15,7 +15,6 @@ import { Like, DataSource, QueryFailedError } from 'typeorm';
 @Injectable()
 export class Icd10Service {
   constructor(
-    @InjectRepository(RefIcd10)
     private readonly icd10Repository: Icd10Repository,
     @InjectDataSource()
     private readonly dataSource: DataSource,

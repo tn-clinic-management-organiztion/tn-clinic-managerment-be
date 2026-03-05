@@ -1,3 +1,4 @@
+import { ServicesRepository } from './repositories/service.repository';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
@@ -10,8 +11,9 @@ import { Icd10Service } from 'src/modules/system/services/icd10.service';
 import { OrgRoomsController } from 'src/modules/system/controllers/org-room.controller';
 import { RefServiceCategory } from 'src/database/entities/service/ref_service_categories.entity';
 import { RefService } from 'src/database/entities/service/ref_services.entity';
-import { ServicesService } from 'src/modules/system/services-dv/services.service';
-import { ServicesController } from 'src/modules/system/services-dv/services.controller';
+import { ServicesController } from 'src/modules/system/controllers/services.controller';
+import { ServicesService } from 'src/modules/system/services/services.service';
+import { ServiceCategoriesRepository } from 'src/modules/system/repositories/service-category.repository';
 
 @Module({
   imports: [
@@ -23,7 +25,7 @@ import { ServicesController } from 'src/modules/system/services-dv/services.cont
     ]),
   ],
   controllers: [OrgRoomsController, Icd10Controller, ServicesController],
-  providers: [OrgRoomsService, Icd10Service, Icd10Repository, ServicesService],
-  exports: [OrgRoomsService, Icd10Service, Icd10Repository, ServicesService],
+  providers: [OrgRoomsService, Icd10Service, Icd10Repository, ServicesService, ServicesRepository, ServiceCategoriesRepository],
+  exports: [OrgRoomsService, Icd10Service, Icd10Repository, ServicesService, ServicesRepository, ServiceCategoriesRepository],
 })
 export class SystemModule {}

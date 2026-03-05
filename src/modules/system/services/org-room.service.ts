@@ -3,7 +3,7 @@ import {
   NotFoundException,
   ConflictException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like, DataSource, In } from 'typeorm';
 import { OrgRoom } from '../../../database/entities/auth/org_rooms.entity';
 import { AssignServicesToRoomDto, CreateOrgRoomDto, QueryOrgRoomDto, UpdateOrgRoomDto } from 'src/modules/system/dto/org-room/org-room.dto';
@@ -14,6 +14,7 @@ export class OrgRoomsService {
   constructor(
     @InjectRepository(OrgRoom)
     private readonly orgRoomRepo: Repository<OrgRoom>,
+    @InjectDataSource()
     private readonly dataSource: DataSource,
   ) {}
 

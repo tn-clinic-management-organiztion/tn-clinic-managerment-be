@@ -4,7 +4,7 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, EntityManager } from 'typeorm';
 import {
   EncounterStatus,
@@ -14,7 +14,7 @@ import {
 import {
   QueueStatus,
   QueueTicket,
-} from 'src/database/entities/reception/queue_tickets.entity';
+} from 'src/database/entities/queue/queue_tickets.entity';
 import { CreateEncounterDto } from 'src/modules/clinical/dto/encounters/create-encounter.dto';
 import { StaffsRepository } from 'src/modules/iam/repositories/staffs.repository';
 import { EncountersRepository } from 'src/modules/clinical/repositories/encounters.repository';
@@ -33,6 +33,7 @@ export class EncountersService {
     private readonly icd10Repository: Icd10Repository,
     private readonly patientsRepository: PatientsRepository,
     private readonly staffsRepository: StaffsRepository,
+    @InjectDataSource()
     private readonly dataSource: DataSource,
   ) {}
 

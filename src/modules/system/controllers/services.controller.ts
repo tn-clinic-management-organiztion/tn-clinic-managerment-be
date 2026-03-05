@@ -9,17 +9,17 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
-import { ServicesService } from './services.service';
-import { CreateServiceDto } from './dto/services/create-service.dto';
-import { UpdateServiceDto } from './dto/services/update-service.dto';
-import { QueryServiceDto } from './dto/services/query-service.dto';
-import { CreateCategoryDto } from './dto/categories/create-category.dto';
-import { UpdateCategoryDto } from './dto/categories/update-category.dto';
-import { QueryCategoryDto } from './dto/categories/query-category.dto';
-import { LinkRoomServiceDto } from './dto/services/link-room-service.dto';
+import { CreateCategoryDto } from 'src/modules/system/dto/service/service-category/create-category.dto';
+import { QueryCategoryDto } from 'src/modules/system/dto/service/service-category/query-category.dto';
+import { UpdateCategoryDto } from 'src/modules/system/dto/service/service-category/update-category.dto';
+import { CreateServiceDto } from 'src/modules/system/dto/service/service/create-service.dto';
+import { LinkRoomServiceDto } from 'src/modules/system/dto/service/service/link-room-service.dto';
+import { QueryServiceDto } from 'src/modules/system/dto/service/service/query-service.dto';
+import { UpdateServiceDto } from 'src/modules/system/dto/service/service/update-service.dto';
+import { ServicesService } from 'src/modules/system/services/services.service';
 
 @ApiTags('Services')
-@Controller('services')
+@Controller('system/services')
 export class ServicesController {
   constructor(private readonly servicesService: ServicesService) {}
 

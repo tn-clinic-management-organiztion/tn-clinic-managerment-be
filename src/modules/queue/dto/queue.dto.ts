@@ -1,4 +1,4 @@
-import { QueueStatus, QueueSource, QueueTicketType } from './../../../../database/entities/reception/queue_tickets.entity';
+import { QueueStatus, QueueSource, QueueTicketType } from '../../../database/entities/queue/queue_tickets.entity';
 import { PageQueryDto } from 'src/modules/_shared/pagination';
 import {
   IsArray,
@@ -28,12 +28,6 @@ export class CreateTicketDto {
   @IsOptional()
   @IsEnum(QueueSource)
   source?: QueueSource = QueueSource.WALKIN;
-
-  @IsOptional()
-  @IsArray()
-  @Type(() => Number)
-  @IsInt({ each: true })
-  service_ids?: number[];
 }
 
 export class UpdateTicketDto {

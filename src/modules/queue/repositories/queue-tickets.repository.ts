@@ -5,12 +5,12 @@ import {
   QueueStatus,
   QueueTicket,
   QueueTicketType,
-} from 'src/database/entities/reception/queue_tickets.entity';
+} from 'src/database/entities/queue/queue_tickets.entity';
 import {
   CreateTicketDto,
   QueryTicketDto,
   UpdateTicketDto,
-} from 'src/modules/reception/dto/queue/queue.dto';
+} from 'src/modules/queue/dto/queue.dto';
 import { EntityManager, Repository } from 'typeorm';
 
 @Injectable()

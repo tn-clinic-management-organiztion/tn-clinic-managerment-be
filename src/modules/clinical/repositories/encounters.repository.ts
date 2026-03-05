@@ -49,7 +49,6 @@ export class EncountersRepository {
       .createQueryBuilder(MedicalEncounter, 'encounter')
       .leftJoinAndSelect('encounter.patient', 'patient')
       .leftJoinAndSelect('encounter.doctor', 'doctor')
-      .leftJoinAndSelect('encounter.assigned_room', 'room')
       .leftJoinAndSelect('encounter.icd_ref', 'icd');
 
     if (patient_id) {
@@ -108,7 +107,6 @@ export class EncountersRepository {
       .leftJoin('e.patient', 'p')
       .leftJoin('p.user', 'pu')
       .leftJoin('e.doctor', 'd')
-      .leftJoin('e.assigned_room', 'r')
       .leftJoin('e.icd_ref', 'icd')
       .where('e.encounter_id = :id', { id })
       .select([
@@ -128,7 +126,6 @@ export class EncountersRepository {
         'e.sp_o2',
         'e.final_icd_code',
         'e.doctor_conclusion',
-        'e.assigned_room_id',
         'e.patient_id',
         'e.doctor_id',
 
@@ -146,9 +143,6 @@ export class EncountersRepository {
         'icd.name_vi',
         'icd.name_en',
 
-        // room
-        'r.room_id',
-        'r.room_name',
       ])
       .getOne();
     return encounter;
@@ -171,7 +165,7 @@ export class EncountersRepository {
     const db = manager || this.encountersRepository.manager;
     const encounters = await db.find(MedicalEncounter, {
       where: { patient_id },
-      relations: ['doctor', 'assigned_room', 'final_icd'],
+      relations: ['doctor', 'final_icd'],
       order: { visit_date: 'DESC' },
     });
 

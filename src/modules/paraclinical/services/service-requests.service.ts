@@ -1,9 +1,15 @@
+import { QueuesService } from 'src/modules/queue/services/queue.service';
+import { QueueTicketsRepository } from 'src/modules/queue/repositories/queue-tickets.repository';
+import { ServicesRepository } from './../../system/repositories/service.repository';
+import { StaffsRepository } from 'src/modules/iam/repositories/staffs.repository';
+import { EncountersRepository } from 'src/modules/clinical/repositories/encounters.repository';
+import { TicketServiceRepository } from 'src/modules/queue/repositories/ticket_service.repository';
 import {
   Injectable,
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, IsNull, EntityManager } from 'typeorm';
 import { ServiceRequest } from 'src/database/entities/service/service_requests.entity';
 import { ServiceRequestItem } from 'src/database/entities/service/service_request_items.entity';
@@ -13,103 +19,170 @@ import { CreateServiceRequestDto } from 'src/modules/paraclinical/dto/service-re
 import { QueryServiceRequestDto } from 'src/modules/paraclinical/dto/service-requests/query-service-request.dto';
 import { UpdateServiceRequestDto } from 'src/modules/paraclinical/dto/service-requests/update-service-request.dto';
 import { UpdateRequestItemDto } from 'src/modules/paraclinical/dto/service-requests/update-request-item.dto';
+import { CreateTicketServiceDto } from 'src/modules/queue/dto/ticket-service.dto';
+import { CreateTicketDto } from 'src/modules/queue/dto/queue.dto';
+import {
+  QueueSource,
+  QueueTicketType,
+} from 'src/database/entities/queue/queue_tickets.entity';
 
 @Injectable()
 export class ServiceRequestsService {
   constructor(
-    @InjectRepository(ServiceRequest)
-    private requestRepo: Repository<ServiceRequest>,
-    @InjectRepository(ServiceRequestItem)
-    private itemRepo: Repository<ServiceRequestItem>,
+    @InjectDataSource()
     private dataSource: DataSource,
-    private serviceRequestItemsRepository: ServiceRequestItemsRepository,
     private serviceRequestsRepository: ServiceRequestsRepository,
+    private serviceRequestItemsRepository: ServiceRequestItemsRepository,
+    private encounterRepository: EncountersRepository,
+    private staffsRepository: StaffsRepository,
+    private servicesRepository: ServicesRepository,
+    private queuesService: QueuesService,
+    private ticketServiceRepository: TicketServiceRepository,
   ) {}
 
-  async createRequest(dto: CreateServiceRequestDto): Promise<ServiceRequest> {
-    return await this.dataSource.transaction(async (manager) => {
-      // Verify encounter exists
-      const encounterExists = await manager.query(
-        `SELECT 1 FROM medical_encounters WHERE encounter_id = $1 AND deleted_at IS NULL`,
-        [dto.encounter_id],
+  async createRequest(
+    dto: CreateServiceRequestDto,
+    manager?: EntityManager,
+  ): Promise<ServiceRequest> {
+    const execute = async (mgr: EntityManager) => {
+      // 1. Verify encounter
+      const encounter = await this.encounterRepository.findById(
+        dto.encounter_id,
+        mgr,
       );
-
-      if (!encounterExists.length) {
+      if (!encounter) {
         throw new NotFoundException('Encounter not found');
       }
 
-      // Verify doctor exists
-      const doctorExists = await manager.query(
-        `SELECT 1 FROM staff_profiles WHERE staff_id = $1 AND deleted_at IS NULL`,
-        [dto.requesting_doctor_id],
+      // 2. Verify doctor
+      const doctor = await this.staffsRepository.findById(
+        dto.requesting_doctor_id,
+        mgr,
       );
-
-      if (!doctorExists.length) {
+      if (!doctor) {
         throw new NotFoundException('Doctor not found');
       }
 
-      // Create request
-      const request = manager.create(ServiceRequest, {
-        encounter_id: dto.encounter_id,
-        requesting_doctor_id: dto.requesting_doctor_id,
-        notes: dto.notes,
-      });
-
-      const savedRequest = await manager.save(request);
-
-      // Create items
-      if (dto.items && dto.items.length > 0) {
-        for (const itemDto of dto.items) {
-          // Verify service exists
-          const serviceExists = await manager.query(
-            `SELECT 1 FROM ref_services WHERE service_id = $1`,
-            [itemDto.service_id],
-          );
-
-          if (!serviceExists.length) {
-            throw new NotFoundException(
-              `Service with ID ${itemDto.service_id} not found`,
-            );
-          }
-
-          const item = manager.create(ServiceRequestItem, {
-            request_id: savedRequest.request_id,
-            service_id: itemDto.service_id,
-          });
-
-          await manager.save(item);
-        }
-      }
-
-      return savedRequest;
-    });
-  }
-
-  /**
-   * TẠO SERVICE REQUEST CHO DỊCH VỤ KHÁM BAN ĐẦU
-   * Gọi ngay sau khi tạo Encounter
-   */
-  async createInitialConsultationRequest(
-    encounterId: string,
-    serviceId: number,
-    manager?: EntityManager,
-  ) {
-    const execute = async (mgr: EntityManager) => {
-      // Create service_request
-      const serviceRequest =
-        await this.serviceRequestsRepository.createServiceRequest(
-          encounterId,
-          mgr,
-        );
-      const requestId = serviceRequest[0].request_id;
-      // Create service_request_item for initial consultation service
-      await this.serviceRequestItemsRepository.createServiceRequestItem(
-        requestId,
-        serviceId,
+      // 3. Create service_request (header)
+      const request = await this.serviceRequestsRepository.createServiceRequest(
+        dto.encounter_id,
+        dto.requesting_doctor_id,
         mgr,
       );
 
-      return { request_id: requestId };
+      if (!dto.items || dto.items.length === 0) {
+        return request;
+      }
+
+      // 4. Verify all services exist
+      const serviceIds = dto.items.map((item) => item.service_id);
+      for (const serviceId of serviceIds) {
+        const service = await this.servicesRepository.findOneServiceById(
+          serviceId,
+          mgr,
+        );
+        if (!service) {
+          throw new NotFoundException(`Service ${serviceId} not found`);
+        }
+      }
+
+      // 5. GROUP services by room
+      const roomToServiceIds = new Map<number, number[]>();
+
+      for (const serviceId of serviceIds) {
+        // Tìm tất cả phòng có thể làm dịch vụ này
+        const rooms = await mgr
+          .getRepository('room_services')
+          .createQueryBuilder('rs')
+          .where('rs.service_id = :serviceId', { serviceId })
+          .getMany();
+
+        if (!rooms || rooms.length === 0) {
+          throw new BadRequestException(
+            `Service ${serviceId} is not assigned to any room`,
+          );
+        }
+
+        const selectedRoom = rooms[0];
+        const roomId = selectedRoom.room_id;
+
+        if (!roomToServiceIds.has(roomId)) {
+          roomToServiceIds.set(roomId, []);
+        }
+        roomToServiceIds.get(roomId)!.push(serviceId);
+      }
+
+      // 6. create service_request_items (tất cả items trước)
+      const itemIdMap = new Map<number, string>(); // service_id → item_id
+
+      for (const itemDto of dto.items) {
+        const item =
+          await this.serviceRequestItemsRepository.createServiceRequestItem(
+            request.request_id,
+            itemDto.service_id,
+            mgr,
+          );
+        itemIdMap.set(itemDto.service_id, item.item_id);
+      }
+
+      // 7. Tạo 1 ticket/phòng và link items
+      for (const [roomId, serviceIdsForRoom] of roomToServiceIds.entries()) {
+        // Tạo queue_ticket
+        const ticketPayload: CreateTicketDto = {
+          room_id: roomId,
+          ticket_type: QueueTicketType.SERVICE,
+          encounter_id: dto.encounter_id,
+          source: QueueSource.WALKIN,
+        };
+
+        const ticket = await this.queuesService.createTicket(
+          ticketPayload,
+          mgr,
+        );
+
+        // Link tất cả services của phòng này vào ticket
+        for (const serviceId of serviceIdsForRoom) {
+          const itemId = itemIdMap.get(serviceId);
+          if (!itemId) continue;
+
+          await this.ticketServiceRepository.createTicketService(
+            {
+              ticket_id: ticket.ticket_id,
+              item_id: itemId,
+            },
+            mgr,
+          );
+        }
+      }
+
+      return request;
+    };
+
+    if (manager) {
+      return await execute(manager);
+    } else {
+      return await this.dataSource.transaction(async (newManager) => {
+        return await execute(newManager);
+      });
+    }
+  }
+
+  async findAllRequests(
+    query: QueryServiceRequestDto,
+    manager?: EntityManager,
+  ) {
+    const execute = async (mgr: EntityManager) => {
+      const { data, total } =
+        await this.serviceRequestsRepository.findAllRequest(query, mgr);
+      return {
+        data,
+        meta: {
+          page: query.page || 1,
+          limit: query.limit || 20,
+          total,
+          totalPages: Math.ceil(total / (query.limit || 20)),
+        },
+      };
     };
     if (manager) {
       return await execute(manager);
@@ -120,54 +193,107 @@ export class ServiceRequestsService {
     }
   }
 
-  async findAllRequests(query: QueryServiceRequestDto) {
-    const { data, total } =
-      await this.serviceRequestsRepository.findAllRequest(query);
-    return {
-      data,
-      meta: {
-        page: query.page || 1,
-        limit: query.limit || 20,
-        total,
-        totalPages: Math.ceil(total / (query.limit || 20)),
-      },
+  async findOneRequest(
+    id: string,
+    manager?: EntityManager,
+  ): Promise<ServiceRequest> {
+    const execute = async (mgr: EntityManager) => {
+      const request = await this.serviceRequestsRepository.findOneRequest(
+        id,
+        mgr,
+      );
+      if (!request) {
+        throw new NotFoundException(`Service request with ID ${id} not found`);
+      }
+      return request;
     };
-  }
-
-  async findOneRequest(id: string): Promise<ServiceRequest> {
-    const request = await this.serviceRequestsRepository.findOneRequest(id);
-    if (!request) {
-      throw new NotFoundException(`Service request with ID ${id} not found`);
+    if (manager) {
+      return await execute(manager);
+    } else {
+      return await this.dataSource.transaction(async (newManager) => {
+        return await execute(newManager);
+      });
     }
-    return request;
   }
 
-  async getRequestWithItems(id: string) {
-    const request = await this.serviceRequestsRepository.findOneRequest(id);
+  async getRequestWithItems(id: string, manager?: EntityManager) {
+    const execute = async (mgr: EntityManager) => {
+      const request = await this.serviceRequestsRepository.findOneRequest(
+        id,
+        mgr,
+      );
 
-    const items =
-      await this.serviceRequestItemsRepository.findItemsByServiceRequestId(id);
+      const items =
+        await this.serviceRequestItemsRepository.findItemsByServiceRequestId(
+          id,
+          mgr,
+        );
 
-    return {
-      ...request,
-      items: items,
+      return {
+        ...request,
+        items: items,
+      };
     };
+    if (manager) {
+      return await execute(manager);
+    } else {
+      return await this.dataSource.transaction(async (newManager) => {
+        return await execute(newManager);
+      });
+    }
   }
 
   // Update (note) - Not done
   async updateRequest(
     id: string,
     dto: UpdateServiceRequestDto,
+    manager?: EntityManager,
   ): Promise<ServiceRequest> {
-    const request = await this.findOneRequest(id);
-    Object.assign(request, dto);
-    return await this.requestRepo.save(request);
+    const execute = async (mgr: EntityManager) => {
+      const request = await this.serviceRequestsRepository.findOneRequest(
+        id,
+        mgr,
+      );
+      if (!request) {
+        throw new NotFoundException(`Service request with ID ${id} not found`);
+      }
+      return await this.serviceRequestsRepository.updateServiceRequest(
+        request,
+        dto,
+        mgr,
+      );
+    };
+    if (manager) {
+      return await execute(manager);
+    } else {
+      return await this.dataSource.transaction(async (newManager) => {
+        return await execute(newManager);
+      });
+    }
   }
   // Not done
-  async removeRequest(id: string): Promise<void> {
-    const request = await this.findOneRequest(id);
-    request.deleted_at = new Date();
-    await this.requestRepo.save(request);
+  async removeRequest(id: string, manager?: EntityManager) {
+    const execute = async (mgr: EntityManager) => {
+      const request = await this.serviceRequestsRepository.findOneRequest(
+        id,
+        mgr,
+      );
+      if (!request) {
+        throw new NotFoundException(`Service request with ID ${id} not found`);
+      }
+      return await this.serviceRequestsRepository.deleteServiceRequest(
+        request,
+        mgr,
+      );
+    };
+
+    if (manager) {
+      return await execute(manager);
+    } else {
+      return await this.dataSource.transaction(async (newManager) => {
+        return await execute(newManager);
+      });
+    }
   }
 
   // ==================== REQUEST ITEMS ====================
@@ -176,61 +302,135 @@ export class ServiceRequestsService {
   async updateRequestItem(
     itemId: string,
     _dto: UpdateRequestItemDto,
-  ): Promise<ServiceRequestItem> {
-    const item = await this.itemRepo.findOne({
-      where: { item_id: itemId },
-      relations: ['service'],
-    });
+    manager?: EntityManager,
+  ): Promise<ServiceRequestItem | null> {
+    const execute = async (mgr: EntityManager) => {
+      const item =
+        await this.serviceRequestItemsRepository.findItemByServiceRequestItemId(
+          itemId,
+          mgr,
+        );
 
-    if (!item) {
-      throw new NotFoundException(`Request item with ID ${itemId} not found`);
+      if (!item) {
+        throw new NotFoundException(`Request item with ID ${itemId} not found`);
+      }
+
+      return item;
+    };
+    if (manager) {
+      return await execute(manager);
+    } else {
+      return await this.dataSource.transaction(async (newManager) => {
+        return await execute(newManager);
+      });
     }
-
-    return item;
   }
 
-  async removeRequestItem(itemId: string): Promise<void> {
-    const item = await this.itemRepo.findOne({
-      where: { item_id: itemId },
-    });
+  async removeRequestItem(
+    itemId: string,
+    manager?: EntityManager,
+  ): Promise<void> {
+    const execute = async (mgr: EntityManager) => {
+      const item =
+        await this.serviceRequestItemsRepository.findItemByServiceRequestItemId(
+          itemId,
+          mgr,
+        );
 
-    if (!item) {
-      throw new NotFoundException(`Request item with ID ${itemId} not found`);
+      if (!item) {
+        throw new NotFoundException(`Request item with ID ${itemId} not found`);
+      }
+
+      await this.serviceRequestItemsRepository.deleteServiceRequestItem(item);
+    };
+
+    if (manager) {
+      return await execute(manager);
+    } else {
+      return await this.dataSource.transaction(async (newManager) => {
+        return await execute(newManager);
+      });
     }
-
-    await this.itemRepo.remove(item);
   }
 
-  async getRequestItemsByEncounter(encounterId: string) {
-    return await this.itemRepo
-      .createQueryBuilder('item')
-      .leftJoinAndSelect('item.service', 'service')
-      .leftJoinAndSelect('item.request', 'request')
-      .where('request.encounter_id = :encounterId', { encounterId })
-      .andWhere('request.deleted_at IS NULL')
-      .getMany();
-  }
-
-  async getPendingItems(roomId?: number) {
-    // Do đã bỏ trạng thái trên service_request_items, hàm này được chuyển
-    // thành danh sách tất cả items còn hiệu lực (request chưa deleted).
-    const qb = this.itemRepo
-      .createQueryBuilder('item')
-      .leftJoinAndSelect('item.service', 'service')
-      .leftJoinAndSelect('item.request', 'request')
-      .leftJoinAndSelect('request.encounter', 'encounter')
-      .leftJoinAndSelect('encounter.patient', 'patient')
-      .andWhere('request.deleted_at IS NULL');
-
-    if (roomId) {
-      qb.innerJoin(
-        'room_services',
-        'rs',
-        'rs.service_id = service.service_id AND rs.room_id = :roomId',
-        { roomId },
+  async getRequestItemsByEncounter(
+    encounterId: string,
+    manager?: EntityManager,
+  ) {
+    const execute = async (mgr: EntityManager) => {
+      return await this.serviceRequestItemsRepository.findServiceRequestItemsByEncounterId(
+        encounterId,
+        mgr,
       );
-    }
+    };
 
-    return await qb.orderBy('request.created_at', 'ASC').getMany();
+    if (manager) {
+      return await execute(manager);
+    } else {
+      return await this.dataSource.transaction(async (newMangaer) => {
+        return await execute(newMangaer);
+      });
+    }
   }
+
+  async getClsItemsByEncounter(encounterId: string) {
+    const items = await this.dataSource
+      .createQueryBuilder()
+      .select([
+        'sri.item_id',
+        'sri.request_id',
+        'sri.service_id',
+        's.service_name',
+        's.unit_price',
+        'c.category_id',
+        'c.category_name',
+      ])
+      .from('service_request_items', 'sri')
+      .innerJoin('service_requests', 'sr', 'sri.request_id = sr.request_id')
+      .innerJoin('ref_services', 's', 'sri.service_id = s.service_id')
+      .leftJoin('ref_service_categories', 'c', 's.category_id = c.category_id')
+      // ✅ Chỉ lấy items thuộc SERVICE tickets (không phải CONSULTATION)
+      .innerJoin('ticket_service_items', 'tsi', 'tsi.item_id = sri.item_id')
+      .innerJoin('queue_tickets', 'qt', 'qt.ticket_id = tsi.ticket_id')
+      .where('sr.encounter_id = :encounterId', { encounterId })
+      .andWhere('qt.ticket_type = :ticketType', { ticketType: 'SERVICE' })
+      .andWhere('sr.deleted_at IS NULL')
+      .getRawMany();
+
+    return {
+      data: items.map((row) => ({
+        item_id: row.sri_item_id,
+        request_id: row.sri_request_id,
+        service_id: Number(row.sri_service_id),
+        service_name: row.s_service_name,
+        unit_price: row.s_unit_price,
+        category_id: row.c_category_id ? Number(row.c_category_id) : null,
+        category_name: row.c_category_name ?? null,
+      })),
+      meta: {
+        total: items.length,
+      },
+    };
+  }
+
+  // async getPendingItems(roomId?: number) {
+  //   const qb = this.itemRepo
+  //     .createQueryBuilder('item')
+  //     .leftJoinAndSelect('item.service', 'service')
+  //     .leftJoinAndSelect('item.request', 'request')
+  //     .leftJoinAndSelect('request.encounter', 'encounter')
+  //     .leftJoinAndSelect('encounter.patient', 'patient')
+  //     .andWhere('request.deleted_at IS NULL');
+
+  //   if (roomId) {
+  //     qb.innerJoin(
+  //       'room_services',
+  //       'rs',
+  //       'rs.service_id = service.service_id AND rs.room_id = :roomId',
+  //       { roomId },
+  //     );
+  //   }
+
+  //   return await qb.orderBy('request.created_at', 'ASC').getMany();
+  // }
 }

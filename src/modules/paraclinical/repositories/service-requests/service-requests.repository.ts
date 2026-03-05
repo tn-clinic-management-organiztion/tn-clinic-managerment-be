@@ -3,6 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, EntityManager, IsNull } from 'typeorm';
 import { ServiceRequest } from 'src/database/entities/service/service_requests.entity';
 import { QueryServiceRequestDto } from 'src/modules/paraclinical/dto/service-requests/query-service-request.dto';
+import { UpdateServiceRequestDto } from 'src/modules/paraclinical/dto/service-requests/update-service-request.dto';
+import { ServiceRequestItem } from 'src/database/entities/service/service_request_items.entity';
 
 @Injectable()
 export class ServiceRequestsRepository {
@@ -13,20 +15,17 @@ export class ServiceRequestsRepository {
 
   async createServiceRequest(
     encounterId: string,
+    requesting_doctor_id?: string,
     manager?: EntityManager,
-  ): Promise<number> {
+  ): Promise<ServiceRequest> {
     const db = manager || this.serviceRequestRepository.manager;
 
-    const result = await db.query(
-      `
-      INSERT INTO service_requests (encounter_id, created_at)
-      VALUES ($1, NOW())
-      RETURNING request_id
-      `,
-      [encounterId],
-    );
+    const request = db.create(ServiceRequest, {
+      encounter_id: encounterId,
+      requesting_doctor_id,
+    });
 
-    return result[0].request_id;
+    return db.save(request);
   }
 
   async findAllRequest(query: QueryServiceRequestDto, manager?: EntityManager) {
@@ -81,5 +80,23 @@ export class ServiceRequestsRepository {
     });
 
     return request;
+  }
+
+  async updateServiceRequest(
+    serviceRequest: ServiceRequest,
+    dto: UpdateServiceRequestDto,
+    manager?: EntityManager,
+  ) {
+    const db = manager || this.serviceRequestRepository.manager;
+    Object.assign(serviceRequest, dto);
+    return await db.save(serviceRequest);
+  }
+
+  async deleteServiceRequest(
+    serviceRequest: ServiceRequest,
+    manager?: EntityManager,
+  ) {
+    const db = manager || this.serviceRequestRepository.manager;
+    return await db.softRemove(ServiceRequest, serviceRequest);
   }
 }

@@ -1,8 +1,10 @@
+import { RefService } from 'src/database/entities/service/ref_services.entity';
 import {
   Column,
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
@@ -19,6 +21,9 @@ export class RefServiceCategory {
   @ManyToOne(() => RefServiceCategory, { nullable: true })
   @JoinColumn({ name: 'parent_id', referencedColumnName: 'category_id' })
   parent: RefServiceCategory | null;
+
+  @OneToMany(() => RefService, (service) => service.category)
+  services: RefService[];
 
   // --- COLUMNS ---
   @Column({ name: 'category_name', length: 255 })

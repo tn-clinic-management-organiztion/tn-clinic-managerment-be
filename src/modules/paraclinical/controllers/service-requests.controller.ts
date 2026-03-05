@@ -18,18 +18,14 @@ import { UpdateRequestItemDto } from 'src/modules/paraclinical/dto/service-reque
 @ApiTags('Service Requests')
 @Controller('paraclinical/service-requests')
 export class ServiceRequestsController {
-  constructor(private readonly serviceRequestsService: ServiceRequestsService) {}
+  constructor(
+    private readonly serviceRequestsService: ServiceRequestsService,
+  ) {}
 
   @Post()
   @ApiOperation({ summary: 'Create service request with items' })
   createRequest(@Body() dto: CreateServiceRequestDto) {
     return this.serviceRequestsService.createRequest(dto);
-  }
-
-  @Post('create-initial')
-  createInitial(@Body() payload) {
-    const {encounterId, serviceId} = payload;
-    return this.serviceRequestsService.createInitialConsultationRequest(encounterId, serviceId);
   }
 
   @Get()
@@ -38,13 +34,13 @@ export class ServiceRequestsController {
     return this.serviceRequestsService.findAllRequests(query);
   }
 
-  @Get('pending')
-  @ApiOperation({ summary: 'Get pending items for room' })
-  getPendingItems(@Query('roomId') roomId?: string) {
-    return this.serviceRequestsService.getPendingItems(
-      roomId ? +roomId : undefined,
-    );
-  }
+  // @Get('pending')
+  // @ApiOperation({ summary: 'Get pending items for room' })
+  // getPendingItems(@Query('roomId') roomId?: string) {
+  //   return this.serviceRequestsService.getPendingItems(
+  //     roomId ? +roomId : undefined,
+  //   );
+  // }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get service request by ID' })
@@ -89,5 +85,13 @@ export class ServiceRequestsController {
   @ApiOperation({ summary: 'Delete request item' })
   removeRequestItem(@Param('itemId') itemId: string) {
     return this.serviceRequestsService.removeRequestItem(itemId);
+  }
+
+  @Get('encounter/:encounterId/cls-items')
+  @ApiOperation({
+    summary: 'Get CLS items by encounter (exclude consultation)',
+  })
+  async getClsItemsByEncounter(@Param('encounterId') encounterId: string) {
+    return this.serviceRequestsService.getClsItemsByEncounter(encounterId);
   }
 }

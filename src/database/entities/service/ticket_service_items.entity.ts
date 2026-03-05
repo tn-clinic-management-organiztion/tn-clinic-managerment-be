@@ -1,5 +1,5 @@
 import { Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
-import { QueueTicket } from 'src/database/entities/reception/queue_tickets.entity';
+import { QueueTicket } from 'src/database/entities/queue/queue_tickets.entity';
 import { ServiceRequestItem } from 'src/database/entities/service/service_request_items.entity';
 
 @Entity('ticket_service_items')

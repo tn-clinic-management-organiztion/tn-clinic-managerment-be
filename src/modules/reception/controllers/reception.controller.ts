@@ -1,6 +1,6 @@
-import { ReceptionService } from 'src/modules/reception/services/reception/reception.service';
+import { ReceptionService } from 'src/modules/reception/services/reception.service';
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
-import { CreateInitialConsultantDto } from 'src/modules/reception/dto/reception/reception.dto';
+import { CreateInitialConsultantDto } from 'src/modules/reception/dto/reception.dto';
 
 @Controller('reception')
 export class ReceptionController {

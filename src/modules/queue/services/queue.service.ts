@@ -1,27 +1,27 @@
 import { EncountersRepository } from 'src/modules/clinical/repositories/encounters.repository';
-import { QueueTicketsRepository } from './../../repositories/queue-tickets.repository';
-import { QueueCountersRepository } from 'src/modules/reception/repositories/queue-counters.repository';
+import { QueueTicketsRepository } from '../repositories/queue-tickets.repository';
+import { QueueCountersRepository } from 'src/modules/queue/repositories/queue-counters.repository';
 import {
   Injectable,
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, EntityManager } from 'typeorm';
 import {
   QueueTicket,
   QueueStatus,
   QueueSource,
   QueueTicketType,
-} from '../../../../database/entities/reception/queue_tickets.entity';
-import { QueueCounter } from '../../../../database/entities/reception/queue_counters.entity';
+} from '../../../database/entities/queue/queue_tickets.entity';
+import { QueueCounter } from '../../../database/entities/queue/queue_counters.entity';
 import {
   CreateTicketDto,
   UpdateTicketDto,
   QueryTicketDto,
-} from '../../dto/queue/queue.dto';
-import { RoomType } from '../../../../database/entities/auth/org_rooms.entity';
-import { QueueGateway } from 'src/modules/reception/services/queues/queue.gateway';
+} from '../dto/queue.dto';
+import { RoomType } from '../../../database/entities/auth/org_rooms.entity';
+import { QueueGateway } from 'src/modules/queue/services/queue.gateway';
 
 @Injectable()
 export class QueuesService {
@@ -29,6 +29,7 @@ export class QueuesService {
     private readonly queueCountersRepository: QueueCountersRepository,
     private readonly queueTicketsRepository: QueueTicketsRepository,
     private readonly encountersRepository: EncountersRepository,
+    @InjectDataSource()
     private readonly dataSource: DataSource,
     private readonly queueGateway: QueueGateway,
   ) {}
@@ -72,7 +73,9 @@ export class QueuesService {
       }
     }
     if (!counter) {
-      throw new NotFoundException(`Failed to create or retrieve counter for room ${roomId}`);
+      throw new NotFoundException(
+        `Failed to create or retrieve counter for room ${roomId}`,
+      );
     }
     return counter;
   }
@@ -140,20 +143,6 @@ export class QueuesService {
         if (!encounterExists)
           throw new NotFoundException('Encounter not found');
       }
-
-      // Validate services if provided
-      if (dto.service_ids?.length) {
-        const services = await mrg
-          .createQueryBuilder()
-          .select('service_id')
-          .from('ref_services', 's')
-          .where('s.service_id IN (:...ids)', { ids: dto.service_ids })
-          .getRawMany();
-
-        if (services.length !== dto.service_ids.length) {
-          throw new NotFoundException('Some services not found');
-        }
-      }
       // Business rules
       if (dto.ticket_type === QueueTicketType.REGISTRATION) {
         // REGISTRATION must not include encounter_id
@@ -182,13 +171,18 @@ export class QueuesService {
         dto.ticket_type,
       );
 
-      const newQueueTicket = await this.queueTicketsRepository.createQueueTicket(
-        dto,
-        displayNumber,
-        mrg,
-      );
-      const detailNewQueueTicket = await this.queueTicketsRepository.findTicketById(newQueueTicket.ticket_id, mrg);
-      if(!detailNewQueueTicket) {
+      const newQueueTicket =
+        await this.queueTicketsRepository.createQueueTicket(
+          dto,
+          displayNumber,
+          mrg,
+        );
+      const detailNewQueueTicket =
+        await this.queueTicketsRepository.findTicketById(
+          newQueueTicket.ticket_id,
+          mrg,
+        );
+      if (!detailNewQueueTicket) {
         throw new NotFoundException('Tạo QueueTicket thất bại!');
       }
       return detailNewQueueTicket;
@@ -206,6 +200,57 @@ export class QueuesService {
       this.queueGateway.emitTicketCreated(dto.room_id, fullTicket);
     }
     return fullTicket;
+  }
+
+  async getItemsByTicketId(ticketId: string) {
+    // Verify ticket exists
+    const ticket = await this.queueTicketsRepository.findTicketById(ticketId);
+    if (!ticket) {
+      throw new NotFoundException('Ticket not found');
+    }
+
+    const items = await this.dataSource
+      .createQueryBuilder()
+      .select([
+        'sri.item_id',
+        'sri.request_id',
+        'sri.service_id',
+        's.service_name',
+        's.unit_price',
+        'c.category_id',
+        'c.category_name',
+        'COUNT(sr.result_id) as result_count',
+      ])
+      .from('ticket_service_items', 'tsi')
+      .innerJoin('service_request_items', 'sri', 'tsi.item_id = sri.item_id')
+      .innerJoin('ref_services', 's', 'sri.service_id = s.service_id')
+      .leftJoin('ref_service_categories', 'c', 's.category_id = c.category_id')
+      .leftJoin(
+        'service_results',
+        'sr',
+        'sr.request_item_id = sri.item_id AND sr.deleted_at IS NULL',
+      )
+      .where('tsi.ticket_id = :ticketId', { ticketId })
+      .groupBy(
+        'sri.item_id, sri.request_id, sri.service_id, s.service_name, s.unit_price, c.category_id, c.category_name',
+      )
+      .getRawMany();
+
+    return {
+      data: items.map((row) => ({
+        item_id: row.sri_item_id,
+        request_id: row.sri_request_id,
+        service_id: Number(row.sri_service_id),
+        service_name: row.s_service_name,
+        unit_price: row.s_unit_price,
+        category_id: row.c_category_id ? Number(row.c_category_id) : null,
+        category_name: row.c_category_name ?? null,
+        has_result: Number(row.result_count) > 0,
+      })),
+      meta: {
+        total: items.length,
+      },
+    };
   }
 
   async findAllTickets(query: QueryTicketDto) {

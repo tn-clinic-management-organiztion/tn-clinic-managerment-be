@@ -4,7 +4,7 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
 import { ServiceResult } from 'src/database/entities/service/service_results.entity';
 import { ResultImage } from 'src/database/entities/service/result_images.entity';
@@ -26,6 +26,7 @@ export class ResultsService {
     @InjectRepository(ResultImage)
     private imageRepo: Repository<ResultImage>,
     private readonly cloudinaryService: CloudinaryService,
+    @InjectDataSource()
     private readonly dataSource: DataSource,
   ) {}
 

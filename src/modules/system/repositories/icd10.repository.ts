@@ -56,7 +56,7 @@ export class Icd10Repository {
         ]
       : {};
 
-    return db.findAndCount(RefIcd10, {
+    return await db.findAndCount(RefIcd10, {
       where,
       order: { icd_code: 'ASC' },
       take: limit,

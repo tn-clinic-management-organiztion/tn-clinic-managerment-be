@@ -6,7 +6,7 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager } from 'typeorm';
 import { CreatePatientDto } from 'src/modules/iam/dto/patients/create-patient.dto';
 import { UpdatePatientDto } from 'src/modules/iam/dto/patients/update-patient.dto';
@@ -19,6 +19,7 @@ export class PatientsService {
   constructor(
     private readonly usersRepository: UsersRepository,
     private readonly patientsRepository: PatientsRepository,
+    @InjectDataSource()
     private readonly dataSource: DataSource,
   ) {}
 

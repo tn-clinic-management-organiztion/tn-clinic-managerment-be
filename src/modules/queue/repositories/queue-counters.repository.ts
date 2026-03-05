@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { QueueCounter } from 'src/database/entities/reception/queue_counters.entity';
-import { QueueTicketType } from 'src/database/entities/reception/queue_tickets.entity';
+import { QueueCounter } from 'src/database/entities/queue/queue_counters.entity';
+import { QueueTicketType } from 'src/database/entities/queue/queue_tickets.entity';
 import { EntityManager, Repository } from 'typeorm';
 
 @Injectable()
