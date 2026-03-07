@@ -8,7 +8,7 @@ import {
   Delete,
   Query,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiOkResponse, ApiParam, ApiQuery, ApiBody } from '@nestjs/swagger';
 import { ServiceRequestsService } from '../services/service-requests.service';
 import { CreateServiceRequestDto } from 'src/modules/paraclinical/dto/service-requests/create-service-request.dto';
 import { QueryServiceRequestDto } from 'src/modules/paraclinical/dto/service-requests/query-service-request.dto';
@@ -23,13 +23,48 @@ export class ServiceRequestsController {
   ) {}
 
   @Post()
+  @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Create service request with items' })
+  @ApiBody({ type: CreateServiceRequestDto })
+  @ApiOkResponse({
+    description: 'Created request object',
+    schema: {
+      example: {
+        success: true,
+        message: 'OK',
+        data: {
+          id: 'uuid',
+          encounter_id: 'uuid',
+          requesting_doctor_id: 'uuid',
+          notes: null,
+          items: [{ service_id: 123 }],
+        },
+      },
+    },
+  })
   createRequest(@Body() dto: CreateServiceRequestDto) {
     return this.serviceRequestsService.createRequest(dto);
   }
 
   @Get()
+  @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Get all service requests with pagination' })
+  @ApiQuery({ type: QueryServiceRequestDto })
+  @ApiOkResponse({
+    description: 'Paged list of requests',
+    schema: {
+      example: {
+        success: true,
+        message: 'OK',
+        data: {
+          items: [
+            { id: 'uuid', encounter_id: 'uuid', requesting_doctor_id: 'uuid', items: [] },
+          ],
+          meta: { total: 1, page: 1, pageSize: 10 },
+        },
+      },
+    },
+  })
   findAllRequests(@Query() query: QueryServiceRequestDto) {
     return this.serviceRequestsService.findAllRequests(query);
   }
@@ -43,7 +78,19 @@ export class ServiceRequestsController {
   // }
 
   @Get(':id')
+  @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Get service request by ID' })
+  @ApiParam({ name: 'id', description: 'UUID of the service request' })
+  @ApiOkResponse({
+    description: 'Single request',
+    schema: {
+      example: {
+        success: true,
+        message: 'OK',
+        data: { id: 'uuid', encounter_id: 'uuid', items: [] },
+      },
+    },
+  })
   findOneRequest(@Param('id') id: string) {
     return this.serviceRequestsService.findOneRequest(id);
   }
@@ -61,13 +108,26 @@ export class ServiceRequestsController {
   }
 
   @Patch(':id')
+  @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Update service request' })
+  @ApiParam({ name: 'id', description: 'UUID of request to update' })
+  @ApiBody({ type: UpdateServiceRequestDto })
+  @ApiOkResponse({
+    description: 'Updated object',
+    schema: { example: { success: true, message: 'OK', data: { /* updated fields */ } } },
+  })
   updateRequest(@Param('id') id: string, @Body() dto: UpdateServiceRequestDto) {
     return this.serviceRequestsService.updateRequest(id, dto);
   }
 
   @Delete(':id')
+  @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Soft delete service request' })
+  @ApiParam({ name: 'id', description: 'UUID of request to delete' })
+  @ApiOkResponse({
+    description: 'Deletion success',
+    schema: { example: { success: true, message: 'OK', data: true } },
+  })
   removeRequest(@Param('id') id: string) {
     return this.serviceRequestsService.removeRequest(id);
   }
